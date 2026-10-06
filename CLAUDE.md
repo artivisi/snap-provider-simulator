@@ -1,34 +1,35 @@
 # CLAUDE.md — SNAP Provider Simulator
 
-Local simulator of BRI's SNAP (Standar Nasional Open API Pembayaran) VA side.
-Public repo, Apache 2.0: an open-source product and a teaching tool for SNAP
-integration training. README.md holds the original design (written for the
+Local simulator of BRI's SNAP (Standar Nasional Open API Pembayaran) VA side,
+for developing and testing partner apps against SNAP without a bank sandbox.
+Public repo, Apache 2.0. README.md holds the original design (written for the
 gateway use case). Status: design only, no code yet (as of 2026-10-06).
 Plan: `docs/implementation-plan.md`.
 
-Internal context (engagements, deadlines, private source locations) lives in
+The simulator is a general-purpose tool: no reference to any training, course,
+lab, participant, client or engagement in code, docs, config or UI. Internal
+context (why features exist, deadlines, private source locations) lives in
 `CLAUDE.local.md`, which is gitignored. Nothing from it goes into tracked files.
 
 ## Consumers
 
-1. SNAP integration training labs. Participants pull the Docker image; they do
-   not build this repo. First run: image must be pullable by **12 Okt 2026**.
+1. Developers of partner apps (VA billers, payment gateways) testing SNAP
+   integration locally. Distributed as a Docker image; consumers pin a tag.
 2. [payment-gateway](https://github.com/artivisi/payment-gateway): the
    self-hosted VA gateway. Same stack (Java 25, Spring Boot 4.1).
-3. The payment-gateway YouTube series.
 
 QRIS endpoints in README are out of scope for v0.1.
 
 ## Bank profile: BRI
 
-The simulator emulates **BRI's publicly documented SNAP VA behaviour**. BRI
-documents BOTH VA models (bank-hosted and biller-hosted), so one profile covers
-every lab.
+The simulator emulates **BRI's publicly documented SNAP VA behaviour**,
+covering both VA models (bank-hosted and biller-hosted).
 
 Spec content is not ours and is never committed. `docs/sources/` (raw
 Playwright captures; the portals are JS-rendered) and `docs/bri/` (working
-notes, assumptions A1–A33) are local and gitignored. Tracked files only link to
-the original pages below.
+notes) are local and gitignored. Tracked files link to the original pages
+below; `docs/spec-index.json` holds the facts-only index (see Spec
+traceability).
 
 - OAuth: https://developers.bri.co.id/en/snap-bi/apidocs-oauth-snap-bi
 - Bank-hosted VA (create/update/inquiry/delete-va, status): BRI's page
@@ -36,30 +37,30 @@ the original pages below.
   https://apidevportal.aspi-indonesia.or.id/api-services/transfer-kredit/virtual-account
   with BRI's public conventions (`/snap/v1.0` prefix, headers, codes).
 - Security standard: https://apidevportal.aspi-indonesia.or.id/api-services/keamanan
-- BRI SNAP bank statement (informs the Lab 7 CSV):
+- BRIVA Online, biller-hosted (BRI → partner inquiry/payment), v2:
+  https://developers.bri.co.id/en/snap-bi/apidocs-virtual-account-briva-online-snap-bi
+- BRI SNAP bank statement (reference for the statement export):
   https://developers.bri.co.id/en/snap-bi/api-bank-statement-snap-bi
-- BRIVA Online, biller-hosted (BRI → partner inquiry/payment):
-  https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accountbriva-online-snap-bi-v10
 
 Match BRI's paths, headers, field names, VA number layout and response codes
 as documented. Where BRI is silent or gated, follow the public ASPI standard
-and record the assumption (A-numbered) in local `docs/bri/README.md`. Never use
-login-gated pages, even if an account becomes available.
+and record the decision as an assumption (A-id) in `docs/spec-index.json`.
+Never use login-gated pages, even if an account becomes available.
 
-## What the training labs require
+## Capabilities (v0.1)
 
-| Lab | Needs from simulator | BRI doc |
-|---|---|---|
-| 1 | B2B access token verifying SHA256withRSA over `clientId\|timestamp`; **diagnostic mode** returning the expected string-to-sign on failure (teaching aid, real BRI doesn't) | OAuth |
-| 2 | HMAC-SHA512 symmetric signature verification on service calls, same diagnostic mode (expected string-to-sign, minified body hash) | OAuth |
-| 3 | create / update / inquiry / delete VA; token TTL expiry to force re-auth | ASPI VA standard |
-| 4 | **Bank-as-caller**: simulator gets a token FROM the partner app (signed with the simulator's bank private key), then calls the partner app's inquiry and payment endpoints. Triggered from admin UI/API ("customer pays at ATM") | BRIVA Online |
-| 5 | Resend the same payment with the same `X-EXTERNAL-ID` | BRIVA Online |
-| 6 | Failure injection: timeout after processing, slow response, invalid signature, late notification; plus payment status inquiry so participants resolve unknown outcomes | ASPI VA standard (inquiry status, 26) |
-| 7 | **Statement CSV export** (mutasi) per day incl. a payment whose notification was dropped, an amount mismatch, a duplicate. Format is ours (BRI statements are not part of this API) | — |
-
-Also validate `X-TIMESTAMP` skew and `X-EXTERNAL-ID` uniqueness per day on
-inbound calls.
+| Capability | Spec |
+|---|---|
+| B2B access token, SHA256withRSA over `clientId\|timestamp`; partner public key uploaded via admin UI | BRI OAuth |
+| HMAC-SHA512 signature verification on service calls | BRI OAuth, ASPI security |
+| **Diagnostic mode** (config switch): failed signature checks return the expected string-to-sign and body hashes, never the signature. Real banks don't do this | ours |
+| Bank-hosted VA: create / update / inquiry / delete, inquiry status; configurable token TTL | ASPI VA |
+| **Bank-to-partner calls**: simulator obtains a token from the partner app (signed with the simulator's bank key), then calls the partner's inquiry and payment endpoints; triggered from admin UI/API | BRIVA Online |
+| Resend a payment with the same `X-EXTERNAL-ID` | BRIVA Online |
+| Failure injection: timeout after processing, slow response, HTTP error, invalid signature, late or dropped notification | ours |
+| Daily statement CSV from the bank ledger; reconciliation scenario seeder (dropped notification, amount mismatch, duplicate) | ours |
+| Inbound `X-TIMESTAMP` skew and per-day `X-EXTERNAL-ID` uniqueness checks | ASPI security |
+| Exchange log of every inbound/outbound call (headers, body, string-to-sign) | ours |
 
 ## Public repo — what may and may not go in
 
@@ -82,5 +83,16 @@ standard; generic SNAP signature code. NOT allowed:
 - Java 25, Spring Boot 4, Maven, in-memory state.
 - No default values for required config (client id, secret, key paths, partner
   base URL): fail at startup with a clear message.
-- Docker image built and pushed from this repo; consumers pin a tag.
+- Docker image built and pushed from this repo (Docker Hub, multi-arch).
 - Commit messages end with the Co-Authored-By line given by the harness.
+
+## Spec traceability
+
+- `docs/spec-index.json` is the facts-only spec index: source pages with doc
+  versions, endpoints, fields (type, M/O/C, length), headers, response codes,
+  enums, signature formulas, and our assumptions (A-ids). No source prose.
+- Code marks what it implements with `@SpecRef("<item id>")` or
+  `@SpecRef("<item id>#<request|response>.<field>")`.
+- A test enforces both directions: every `@SpecRef` resolves to an index entry,
+  and every item with `"scope": "in"` has at least one `@SpecRef`.
+- Upstream changes: re-capture the pages locally and diff against the index.

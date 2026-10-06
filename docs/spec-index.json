@@ -1,0 +1,5763 @@
+{
+  "schemaVersion": 1,
+  "captured": "2026-10-06",
+  "sources": [
+    {
+      "id": "bri-oauth",
+      "publisher": "BRI",
+      "title": "APIDOCS Oauth SNAP BI (Internal version v1.1)",
+      "url": "https://developers.bri.co.id/en/snap-bi/apidocs-oauth-snap-bi",
+      "docVersion": "v1.0",
+      "access": "public"
+    },
+    {
+      "id": "bri-briva-online-v2",
+      "publisher": "BRI",
+      "title": "APIDOCS Virtual Account Briva Online SNAP BI",
+      "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-account-briva-online-snap-bi",
+      "docVersion": "v2.5",
+      "access": "public"
+    },
+    {
+      "id": "bri-briva-online-v1",
+      "publisher": "BRI",
+      "title": "APIDOCS Virtual Account/Briva Online SNAP BI V1.0",
+      "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accountbriva-online-snap-bi-v10",
+      "docVersion": "v2.4",
+      "access": "public"
+    },
+    {
+      "id": "bri-transfer-va",
+      "publisher": "BRI",
+      "title": "APIDOCS Virtual Account/Transfer to VA SNAP BI",
+      "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accounttransfer-va-snap-bi",
+      "docVersion": "v2.3",
+      "access": "public"
+    },
+    {
+      "id": "bri-bank-statement",
+      "publisher": "BRI",
+      "title": "API Bank Statement SNAP BI",
+      "url": "https://developers.bri.co.id/en/snap-bi/api-bank-statement-snap-bi",
+      "docVersion": "v1.5",
+      "access": "public"
+    },
+    {
+      "id": "aspi-keamanan",
+      "publisher": "ASPI",
+      "title": "Keamanan",
+      "url": "https://apidevportal.aspi-indonesia.or.id/api-services/keamanan",
+      "docVersion": null,
+      "access": "public"
+    },
+    {
+      "id": "aspi-va",
+      "publisher": "ASPI",
+      "title": "Transfer Kredit - Virtual Account",
+      "url": "https://apidevportal.aspi-indonesia.or.id/api-services/transfer-kredit/virtual-account",
+      "docVersion": null,
+      "access": "public"
+    },
+    {
+      "id": "bri-briva-ws",
+      "publisher": "BRI",
+      "title": "BRIVA WS (bank-hosted VA)",
+      "url": null,
+      "docVersion": null,
+      "access": "gated",
+      "used": false
+    },
+    {
+      "id": "bri-va-status",
+      "publisher": "BRI",
+      "title": "VA transaction status",
+      "url": null,
+      "docVersion": null,
+      "access": "gated",
+      "used": false
+    },
+    {
+      "id": "aspi-aplikasi-pengujian",
+      "publisher": "ASPI",
+      "title": "Aplikasi Pengujian",
+      "url": null,
+      "docVersion": null,
+      "access": "gated",
+      "used": false
+    },
+    {
+      "id": "aspi-registered-pdf",
+      "publisher": "ASPI",
+      "title": "Registration-gated standard PDFs",
+      "url": null,
+      "docVersion": null,
+      "access": "gated",
+      "used": false
+    }
+  ],
+  "items": [
+    {
+      "id": "snap.headers.token",
+      "kind": "header-set",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "request": [
+        {
+          "name": "Content-Type",
+          "req": "M",
+          "format": "application/json",
+          "length": null
+        },
+        {
+          "name": "X-CLIENT-KEY",
+          "req": "M",
+          "format": "Alphanumeric",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "String"
+            }
+          ]
+        },
+        {
+          "name": "X-TIMESTAMP",
+          "req": "M",
+          "format": "yyyy-MM-ddTHH:mm:ss.SSSTZD",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "yyyy-MM-ddTHH:mm:ssTZD"
+            }
+          ]
+        },
+        {
+          "name": "X-SIGNATURE",
+          "req": "M",
+          "format": "Base64(SHA256withRSA)",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "hex (code snippets)"
+            }
+          ]
+        }
+      ],
+      "response": [
+        {
+          "name": "X-TIMESTAMP",
+          "req": "M",
+          "format": "yyyy-MM-ddTHH:mm:ssTZD",
+          "length": null
+        },
+        {
+          "name": "X-CLIENT-KEY",
+          "req": "M",
+          "format": "String",
+          "length": null
+        }
+      ],
+      "assumptions": [
+        "A1",
+        "A5",
+        "A13"
+      ]
+    },
+    {
+      "id": "snap.headers.service",
+      "kind": "header-set",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-briva-online-v1",
+        "bri-transfer-va",
+        "bri-bank-statement",
+        "aspi-keamanan"
+      ],
+      "request": [
+        {
+          "name": "Content-Type",
+          "req": "M",
+          "format": "application/json",
+          "length": null
+        },
+        {
+          "name": "Authorization",
+          "req": "M",
+          "format": "Bearer {token}",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "C"
+            }
+          ]
+        },
+        {
+          "name": "X-TIMESTAMP",
+          "req": "M",
+          "format": "ISO-8601",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "yyyy-MM-ddTHH:mm:ssTZD"
+            }
+          ]
+        },
+        {
+          "name": "X-SIGNATURE",
+          "req": "M",
+          "format": "Base64(HMAC_SHA512)",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "hex (code snippets)"
+            }
+          ]
+        },
+        {
+          "name": "X-PARTNER-ID",
+          "req": "M",
+          "format": "Alphanumeric",
+          "length": "36",
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "String 36"
+            }
+          ]
+        },
+        {
+          "name": "CHANNEL-ID",
+          "req": "M",
+          "format": "Numeric",
+          "length": "5",
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "Alphanumeric 5"
+            },
+            {
+              "source": "aspi-keamanan",
+              "value": "String 5"
+            }
+          ]
+        },
+        {
+          "name": "X-EXTERNAL-ID",
+          "req": "M",
+          "format": "Numeric",
+          "length": "36",
+          "conflicts": [
+            {
+              "source": "bri-transfer-va",
+              "value": "Numeric 9"
+            },
+            {
+              "source": "bri-bank-statement",
+              "value": "Numeric 9"
+            },
+            {
+              "source": "aspi-keamanan",
+              "value": "String 36, numeric"
+            }
+          ]
+        },
+        {
+          "name": "ORIGIN",
+          "req": "O",
+          "format": "String",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "Content-Type",
+          "req": "M",
+          "format": "application/json",
+          "length": null
+        },
+        {
+          "name": "X-TIMESTAMP",
+          "req": "M",
+          "format": "yyyy-MM-ddTHH:mm:ssTZD",
+          "length": null
+        }
+      ],
+      "assumptions": [
+        "A1",
+        "A5",
+        "A8",
+        "A10",
+        "A11",
+        "A13",
+        "A15"
+      ]
+    },
+    {
+      "id": "snap.sig.asymmetric-token",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "formula": "SHA256withRSA(privateKey, X-CLIENT-KEY + \"|\" + X-TIMESTAMP)",
+      "assumptions": [
+        "A1"
+      ]
+    },
+    {
+      "id": "snap.sig.symmetric",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "formula": "HMAC_SHA512(clientSecret, HTTPMethod + \":\" + EndpointUrl + \":\" + AccessToken + \":\" + Lowercase(HexEncode(SHA-256(minify(RequestBody)))) + \":\" + X-TIMESTAMP)",
+      "values": {
+        "httpMethod": [
+          "GET",
+          "POST",
+          "PUT",
+          "PATCH",
+          "DELETE"
+        ],
+        "endpointUrl": "path after host and port, without query string",
+        "accessToken": "Authorization header value without \"Bearer \""
+      },
+      "conflicts": [
+        {
+          "source": "aspi-keamanan",
+          "field": "endpointUrl",
+          "value": "relative path including URL parameters"
+        },
+        {
+          "source": "bri-oauth",
+          "field": "algorithm",
+          "value": "SHA256-HMAC (prose)"
+        }
+      ],
+      "assumptions": [
+        "A1",
+        "A2",
+        "A3"
+      ]
+    },
+    {
+      "id": "snap.sig.body-hash",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "formula": "Lowercase(HexEncode(SHA-256(minify(RequestBody))))",
+      "values": {
+        "emptyBody": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "checkInput": "{\"hello\":\"world\"}",
+        "checkOutput": "93a23971a914e5eacbf0a8d25154cda309c3c1c72fbb9914d47c60f3cb681588"
+      },
+      "conflicts": [
+        {
+          "source": "bri-oauth",
+          "field": "emptyBody",
+          "value": "blank when no body"
+        }
+      ],
+      "assumptions": [
+        "A4"
+      ]
+    },
+    {
+      "id": "snap.sig.timestamp",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "formula": "yyyy-MM-ddTHH:mm:ss.SSSTZD",
+      "values": {
+        "accept": "ISO-8601 with offset (Z or +HH:mm), milliseconds optional",
+        "generate": "yyyy-MM-dd'T'HH:mm:ss.SSS+07:00",
+        "skew": "simulator.timestamp-skew"
+      },
+      "conflicts": [
+        {
+          "source": "aspi-keamanan",
+          "field": "formula",
+          "value": "yyyy-MM-ddTHH:mm:ssTZD"
+        },
+        {
+          "source": "bri-oauth",
+          "field": "offset",
+          "value": "UTC/GMT+0 required (prose); sample uses +07:00"
+        }
+      ],
+      "assumptions": [
+        "A5",
+        "A6",
+        "A7"
+      ]
+    },
+    {
+      "id": "snap.response-code",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "aspi-keamanan",
+        "bri-briva-online-v2"
+      ],
+      "formula": "responseCode = HTTP status (3) + service code (2) + case code (2)",
+      "values": {
+        "responseCodeLength": "7",
+        "responseMessageLength": "150"
+      },
+      "assumptions": []
+    },
+    {
+      "id": "snap.external-id",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "aspi-keamanan",
+        "bri-briva-online-v2"
+      ],
+      "formula": "unique per (client id, calendar day Asia/Jakarta); duplicate -> 409xx00 Conflict",
+      "values": {
+        "inbound": "Numeric 1-36",
+        "outbound": "Numeric 32"
+      },
+      "assumptions": [
+        "A8",
+        "A9",
+        "A33"
+      ]
+    },
+    {
+      "id": "bri.va.number-layout",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-transfer-va",
+        "aspi-va"
+      ],
+      "formula": "virtualAccountNo = partnerServiceId (8, left-padded with spaces) + customerNo",
+      "values": {
+        "partnerServiceId": "8",
+        "customerNo": "13",
+        "virtualAccountNo": "28"
+      },
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "customerNo",
+          "value": "20"
+        },
+        {
+          "source": "bri-briva-online-v2",
+          "field": "padding",
+          "value": "left padding 0 (virtualAccountNo row)"
+        }
+      ],
+      "assumptions": [
+        "A17",
+        "A18"
+      ]
+    },
+    {
+      "id": "bri.oauth.token-b2b",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bri-oauth",
+        "aspi-keamanan"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/snap/v1.0/access-token/b2b",
+      "serviceCode": "73",
+      "headers": "snap.headers.token",
+      "request": [
+        {
+          "name": "grantType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "client_credentials"
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "C",
+          "length": null
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "C",
+          "length": null
+        },
+        {
+          "name": "accessToken",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "2048"
+            }
+          ]
+        },
+        {
+          "name": "tokenType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "BearerToken"
+          ],
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "Bearer, Mac"
+            }
+          ]
+        },
+        {
+          "name": "expiresIn",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "900"
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": null,
+          "http": 200,
+          "case": null,
+          "message": null
+        },
+        {
+          "code": "4007300",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4007301",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4007302",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4017300",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]",
+          "conflicts": [
+            {
+              "source": "bri-oauth",
+              "value": "Unauthorized Client / Unauthorized stringToSign / Unauthorized Signature"
+            }
+          ]
+        },
+        {
+          "code": "4017301",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "5007300",
+          "http": 500,
+          "case": "00",
+          "message": "General Error",
+          "conflicts": [
+            {
+              "source": "bri-oauth",
+              "value": "500000"
+            }
+          ]
+        }
+      ],
+      "assumptions": [
+        "A12",
+        "A14",
+        "A16"
+      ]
+    },
+    {
+      "id": "aspi.oauth.token-b2b-outbound",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-keamanan",
+        "bri-oauth"
+      ],
+      "direction": "bank-to-partner",
+      "method": "POST",
+      "path": "/v1.0/access-token/b2b",
+      "serviceCode": "73",
+      "headers": "snap.headers.token",
+      "request": [
+        {
+          "name": "grantType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "client_credentials"
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "C",
+          "length": null
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "C",
+          "length": null
+        },
+        {
+          "name": "accessToken",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "2048"
+            }
+          ]
+        },
+        {
+          "name": "tokenType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "BearerToken"
+          ],
+          "conflicts": [
+            {
+              "source": "aspi-keamanan",
+              "value": "Bearer, Mac"
+            }
+          ]
+        },
+        {
+          "name": "expiresIn",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "900"
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2007300",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4007300",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4007301",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4007302",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4017300",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "5007300",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5047300",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "assumptions": [
+        "A26",
+        "A27"
+      ]
+    },
+    {
+      "id": "aspi.va.create-va",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/snap/v1.0/transfer-va/create-va",
+      "serviceCode": "27",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "O",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "O",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "Array of Objects (create-va request)"
+            }
+          ]
+        },
+        {
+          "name": "feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.trxId",
+          "type": "String",
+          "req": "M",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "virtualAccountData.feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002700",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4002700",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002701",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002702",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012700",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4012701",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4042716",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found"
+        },
+        {
+          "code": "4092700",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "4092701",
+          "http": 409,
+          "case": "01",
+          "message": "Duplicate partnerReferenceNo"
+        },
+        {
+          "code": "5002700",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5042700",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/create-va"
+        }
+      ],
+      "assumptions": [
+        "A15",
+        "A18",
+        "A19",
+        "A20",
+        "A21",
+        "A22",
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.update-va",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "PUT",
+      "path": "/snap/v1.0/transfer-va/update-va",
+      "serviceCode": "28",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.trxId",
+          "type": "String",
+          "req": "M",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "virtualAccountData.feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.lastUpdateDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.paymentDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002800",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4002800",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002801",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002802",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012800",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4012801",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4042812",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4042814",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill"
+        },
+        {
+          "code": "4042816",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found"
+        },
+        {
+          "code": "4042819",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account"
+        },
+        {
+          "code": "4092800",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5002800",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5042800",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/update-va"
+        }
+      ],
+      "assumptions": [
+        "A15",
+        "A18",
+        "A21",
+        "A23",
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.inquiry-va",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/snap/v1.0/transfer-va/inquiry-va",
+      "serviceCode": "30",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.trxId",
+          "type": "String",
+          "req": "M",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "virtualAccountData.feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.lastUpdateDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.paymentDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2003000",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4003000",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4003001",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4003002",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4013000",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4013001",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4043012",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4043016",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found"
+        },
+        {
+          "code": "4043019",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account"
+        },
+        {
+          "code": "4093000",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5003000",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5043000",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/inquiry-va"
+        }
+      ],
+      "assumptions": [
+        "A15",
+        "A18",
+        "A21",
+        "A23",
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.delete-va",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "DELETE",
+      "path": "/snap/v1.0/transfer-va/delete-va",
+      "serviceCode": "31",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.trxId",
+          "type": "String",
+          "req": "O",
+          "length": "12"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2003100",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4003100",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4003101",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4003102",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4013100",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4013101",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4043112",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4043114",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill"
+        },
+        {
+          "code": "4043116",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found"
+        },
+        {
+          "code": "4093100",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5003100",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5043100",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/delete-va"
+        }
+      ],
+      "assumptions": [
+        "A15",
+        "A18",
+        "A23",
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.inquiry-status",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/snap/v1.0/transfer-va/status",
+      "serviceCode": "26",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "inquiryRequestId",
+          "type": "String",
+          "req": "C",
+          "length": "128"
+        },
+        {
+          "name": "paymentRequestId",
+          "type": "String",
+          "req": "O",
+          "length": "128"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.english",
+          "type": "String",
+          "req": "O",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "128"
+        },
+        {
+          "name": "virtualAccountData.paymentRequestId",
+          "type": "String",
+          "req": "C",
+          "length": "128"
+        },
+        {
+          "name": "virtualAccountData.paidAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.paidBills",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.trxDateTime",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.transactionDate",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.referenceNo",
+          "type": "String",
+          "req": "O",
+          "length": "15"
+        },
+        {
+          "name": "virtualAccountData.paymentType",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData.flagAdvise",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData.paymentFlagStatus",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billReferenceNo",
+          "type": "Number",
+          "req": "O",
+          "length": "15"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].status",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].reason",
+          "type": "Object",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].reason.english",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].reason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002600",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4002600",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002601",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002602",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012600",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4012601",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4042601",
+          "http": 404,
+          "case": "01",
+          "message": "Transaction Not Found"
+        },
+        {
+          "code": "4042612",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4042616",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found"
+        },
+        {
+          "code": "4092600",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5002600",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5042600",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/status"
+        }
+      ],
+      "assumptions": [
+        "A15",
+        "A18",
+        "A24",
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.update-status-va",
+      "kind": "endpoint",
+      "scope": "out",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "PUT",
+      "path": "/snap/v1.0/transfer-va/update-status",
+      "serviceCode": "29",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "paidStatus",
+          "type": "String",
+          "req": "M",
+          "length": "1",
+          "values": [
+            "Y",
+            "N"
+          ]
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.trxId",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountTrxType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "C",
+            "O",
+            "I",
+            "M",
+            "L",
+            "N",
+            "X"
+          ]
+        },
+        {
+          "name": "virtualAccountData.feeAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.feeAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.feeAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.expiredDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.lastUpdateDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.paymentDate",
+          "type": "String",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/update-status"
+        }
+      ],
+      "assumptions": [
+        "A34"
+      ]
+    },
+    {
+      "id": "aspi.va.get-report",
+      "kind": "endpoint",
+      "scope": "out",
+      "sources": [
+        "aspi-va"
+      ],
+      "direction": "partner-to-bank",
+      "method": "GET",
+      "path": "/snap/v1.0/transfer-va/report",
+      "serviceCode": "35",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "Number",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "startDate",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "startTime",
+          "type": "String",
+          "req": "O",
+          "length": "14"
+        },
+        {
+          "name": "endDate",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "endTime",
+          "type": "String",
+          "req": "O",
+          "length": "14"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData[]",
+          "type": "Array of Objects",
+          "req": "M",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "virtualAccountdata"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData[].paymentFlagReason",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData[].paymentFlagReason.english",
+          "type": "String",
+          "req": "O",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData[].paymentFlagReason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData[].partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData[].customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData[].virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData[].virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData[].virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData[].virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData[].sourceAccountNo",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData[].sourceAccountType",
+          "type": "String",
+          "req": "O",
+          "length": "1",
+          "values": [
+            "D",
+            "S"
+          ]
+        },
+        {
+          "name": "virtualAccountData[].trxId",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData[].inquiryRequestId",
+          "type": "String",
+          "req": "O",
+          "length": "128"
+        },
+        {
+          "name": "virtualAccountData[].paymentRequestId",
+          "type": "String",
+          "req": "O",
+          "length": "128"
+        },
+        {
+          "name": "virtualAccountData[].paidAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData[].paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData[].paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData[].paidBills",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "virtualAccountData[].totalAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData[].totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData[].totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData[].trxDateTime",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData[].referenceNo",
+          "type": "String",
+          "req": "O",
+          "length": "15"
+        },
+        {
+          "name": "virtualAccountData[].journalNum",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "virtualAccountData[].paymentType",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData[].flagAdvise",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billNo",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billDescription",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billDescription.english",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billSubCompany",
+          "type": "String",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].status",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].reason",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].reason.english",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData[].billDetails[].reason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData[].freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData[].freeTexts[].english",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData[].freeTexts[].indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "virtualAccountData[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": "unlimited"
+        }
+      ],
+      "responseCodes": [],
+      "conflicts": [
+        {
+          "source": "aspi-va",
+          "field": "path",
+          "value": ".../{version}/transfer-va/report"
+        },
+        {
+          "source": "aspi-va",
+          "field": "method",
+          "value": "POST (code snippet)"
+        }
+      ],
+      "assumptions": [
+        "A34"
+      ]
+    },
+    {
+      "id": "bri.briva-online.inquiry",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-briva-online-v1",
+        "aspi-va"
+      ],
+      "direction": "bank-to-partner",
+      "method": "POST",
+      "path": "/v1.0/transfer-va/inquiry",
+      "serviceCode": "24",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "13",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "20"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "amount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "trxDateInit",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "channelCode",
+          "type": "Integer",
+          "req": "O",
+          "length": "4"
+        },
+        {
+          "name": "sourceBankCode",
+          "type": "String",
+          "req": "O",
+          "length": "3"
+        },
+        {
+          "name": "passApp",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "36",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "128"
+            }
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "additionalInfo.idApp",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "13",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "20"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "18",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "28"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "128"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "O"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.inquiryStatus",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.inquiryReason",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.inquiryReason.english",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.inquiryReason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v2",
+              "value": "String (table)"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.additionalInfo.idApp",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo.info1",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002400",
+          "http": 200,
+          "case": "00",
+          "message": "Successful",
+          "req": "M",
+          "status": "Successful",
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v2",
+              "value": "Success"
+            }
+          ]
+        },
+        {
+          "code": "2022400",
+          "http": 202,
+          "case": "00",
+          "message": "Request in Progress",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4002400",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4002401",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4002402",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4012400",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4012401",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4012402",
+          "http": 401,
+          "case": "02",
+          "message": "Invalid Customer Token",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4012403",
+          "http": 401,
+          "case": "03",
+          "message": "Token Not Found (B2B)",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4012404",
+          "http": 401,
+          "case": "04",
+          "message": "Customer Token Not Found",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4017300",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4017301",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4017302",
+          "http": 401,
+          "case": "02",
+          "message": "Invalid Customer Token",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4017303",
+          "http": 401,
+          "case": "03",
+          "message": "Token Not Found (B2B)",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4017304",
+          "http": 401,
+          "case": "04",
+          "message": "Customer Token Not Found",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032400",
+          "http": 403,
+          "case": "00",
+          "message": "Transaction Expired",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032401",
+          "http": 403,
+          "case": "01",
+          "message": "Feature Not Allowed [Reason]",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032402",
+          "http": 403,
+          "case": "02",
+          "message": "Exceeds Transaction Amount Limit",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032403",
+          "http": 403,
+          "case": "03",
+          "message": "Suspected Fraud",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032404",
+          "http": 403,
+          "case": "04",
+          "message": "Activity Count Limit Exceeded",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032405",
+          "http": 403,
+          "case": "05",
+          "message": "Do Not Honor",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032406",
+          "http": 403,
+          "case": "06",
+          "message": "Feature Not Allowed At This Time. [reason]",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032407",
+          "http": 403,
+          "case": "07",
+          "message": "Card Blocked",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032408",
+          "http": 403,
+          "case": "08",
+          "message": "Card Expired",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032409",
+          "http": 403,
+          "case": "09",
+          "message": "Dormant Account",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032410",
+          "http": 403,
+          "case": "10",
+          "message": "Need To Set Token Limit",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032411",
+          "http": 403,
+          "case": "11",
+          "message": "OTP Blocked",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032412",
+          "http": 403,
+          "case": "12",
+          "message": "OTP Lifetime Expired",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032413",
+          "http": 403,
+          "case": "13",
+          "message": "OTP Sent To Cardholer",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032414",
+          "http": 403,
+          "case": "14",
+          "message": "Insufficient Funds",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032415",
+          "http": 403,
+          "case": "15",
+          "message": "Transaction Not Permitted.[reason]",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032416",
+          "http": 403,
+          "case": "16",
+          "message": "Suspend Transaction",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032417",
+          "http": 403,
+          "case": "17",
+          "message": "Token Limit Exceeded",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032418",
+          "http": 403,
+          "case": "18",
+          "message": "Inactive Card/Account/Customer",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032419",
+          "http": 403,
+          "case": "19",
+          "message": "Merchant Blacklisted",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032420",
+          "http": 403,
+          "case": "20",
+          "message": "Merchant Limit Exceed",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032421",
+          "http": 403,
+          "case": "21",
+          "message": "Set Limit Not Allowed",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032422",
+          "http": 403,
+          "case": "22",
+          "message": "Token Limit Invalid",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4032423",
+          "http": 403,
+          "case": "23",
+          "message": "Account Limit Exceed",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042400",
+          "http": 404,
+          "case": "00",
+          "message": "Invalid Transaction Status",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042401",
+          "http": 404,
+          "case": "01",
+          "message": "Transaction Not Found",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042402",
+          "http": 404,
+          "case": "02",
+          "message": "Invalid Routing",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042403",
+          "http": 404,
+          "case": "03",
+          "message": "Bank Not Supported By Switch",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042404",
+          "http": 404,
+          "case": "04",
+          "message": "Transaction Cancelled",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042405",
+          "http": 404,
+          "case": "05",
+          "message": "Merchant Is Not Registered For Card Registration Services",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042406",
+          "http": 404,
+          "case": "06",
+          "message": "Need To Request OTP",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042407",
+          "http": 404,
+          "case": "07",
+          "message": "Journey Not Found",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042408",
+          "http": 404,
+          "case": "08",
+          "message": "Invalid Merchant",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042409",
+          "http": 404,
+          "case": "09",
+          "message": "No Issuer",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042410",
+          "http": 404,
+          "case": "10",
+          "message": "Invalid API Transition",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042411",
+          "http": 404,
+          "case": "11",
+          "message": "Invalid Card/Account/Customer [info]/Virtual Account",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042412",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]",
+          "req": "M",
+          "status": "Failed",
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v1",
+              "value": "Invalid Bill/Virtual Account not Found"
+            }
+          ]
+        },
+        {
+          "code": "4042413",
+          "http": 404,
+          "case": "13",
+          "message": "Invalid Amount",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042414",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4042415",
+          "http": 404,
+          "case": "15",
+          "message": "Invalid OTP",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042416",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042417",
+          "http": 404,
+          "case": "17",
+          "message": "Invalid Terminal",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042418",
+          "http": 404,
+          "case": "18",
+          "message": "Inconsistent Request",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4042419",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4052400",
+          "http": 405,
+          "case": "00",
+          "message": "Requested Function Is Not Supported",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4052401",
+          "http": 405,
+          "case": "01",
+          "message": "Requested Opearation Is Not Allowed",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4092400",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "4092401",
+          "http": 409,
+          "case": "01",
+          "message": "Duplicate partnerReferenceNo",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "4292400",
+          "http": 429,
+          "case": "00",
+          "message": "Too Many Requests",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "5002400",
+          "http": 500,
+          "case": "00",
+          "message": "General Error",
+          "req": "M",
+          "status": "Failed"
+        },
+        {
+          "code": "5002401",
+          "http": 500,
+          "case": "01",
+          "message": "Internal Server Error",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "5002402",
+          "http": 500,
+          "case": "02",
+          "message": "External Server Error",
+          "req": "O",
+          "status": "Failed"
+        },
+        {
+          "code": "5042400",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout",
+          "req": "M",
+          "status": "Failed"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "bri-briva-online-v2",
+          "field": "path",
+          "value": ".../{{version}}/transfer-va/inquiry"
+        },
+        {
+          "source": "bri-briva-online-v1",
+          "field": "path",
+          "value": "snap/v1.0/transfer-va/inquiry"
+        }
+      ],
+      "assumptions": [
+        "A26",
+        "A28",
+        "A29"
+      ]
+    },
+    {
+      "id": "bri.briva-online.payment",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-briva-online-v1",
+        "aspi-va"
+      ],
+      "direction": "bank-to-partner",
+      "method": "POST",
+      "path": "/v1.0/transfer-va/payment",
+      "serviceCode": "25",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "13",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "20"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "paidAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "trxDateTime",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "channelCode",
+          "type": "Integer",
+          "req": "O",
+          "length": "4"
+        },
+        {
+          "name": "sourceBankCode",
+          "type": "String",
+          "req": "O",
+          "length": "3"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "C",
+          "length": "64"
+        },
+        {
+          "name": "paymentRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "36",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "128"
+            }
+          ]
+        },
+        {
+          "name": "hashedSourceAccountNo",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "additionalInfo.passApp",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "additionalInfo.idApp",
+          "type": "String",
+          "req": "O",
+          "length": "8"
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "13",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "20"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "28"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountData.paymentRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "36",
+          "conflicts": [
+            {
+              "source": "aspi-va",
+              "value": "128"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.paidAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "16,2"
+        },
+        {
+          "name": "virtualAccountData.paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.paymentFlagStatus",
+          "type": "String",
+          "req": "O",
+          "length": "2",
+          "values": [
+            "00",
+            "01",
+            "02"
+          ],
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v2",
+              "value": "Object (table)"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v2",
+              "value": "String (table)"
+            }
+          ]
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.english",
+          "type": "String",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.indonesia",
+          "type": "String",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v1",
+              "value": "virtualAccountData.additionalInfo (sample)"
+            }
+          ]
+        },
+        {
+          "name": "additionalInfo.passApp",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "additionalInfo.idApp",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "additionalInfo.info1",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002500",
+          "http": 200,
+          "case": "00",
+          "message": "Successful",
+          "req": "M",
+          "status": "Successful",
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v2",
+              "value": "Success"
+            }
+          ]
+        },
+        {
+          "code": "2022500",
+          "http": 202,
+          "case": "00",
+          "message": "Request In Progress",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4002500",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4002501",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4002502",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4012500",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4012501",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4012502",
+          "http": 401,
+          "case": "02",
+          "message": "Invalid Customer Token",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4012503",
+          "http": 401,
+          "case": "03",
+          "message": "Token Not Found (B2B)",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4012504",
+          "http": 401,
+          "case": "04",
+          "message": "Customer Token Not Found",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032500",
+          "http": 403,
+          "case": "00",
+          "message": "Transaction Expired",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032501",
+          "http": 403,
+          "case": "01",
+          "message": "Feature Not Allowed [Reason]",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032502",
+          "http": 403,
+          "case": "02",
+          "message": "Exceeds Transaction Amount Limit",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032503",
+          "http": 403,
+          "case": "03",
+          "message": "Suspected Fraud",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032504",
+          "http": 403,
+          "case": "04",
+          "message": "Activity Count Limit Exceeded",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032505",
+          "http": 403,
+          "case": "05",
+          "message": "Do Not Honor",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032506",
+          "http": 403,
+          "case": "06",
+          "message": "Feature Not Allowed At This Time. [reason]",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032507",
+          "http": 403,
+          "case": "07",
+          "message": "Card Blocked",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032508",
+          "http": 403,
+          "case": "08",
+          "message": "Card Expired",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032509",
+          "http": 403,
+          "case": "09",
+          "message": "Dormant Account",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032510",
+          "http": 403,
+          "case": "10",
+          "message": "Need To Set Token Limit",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032511",
+          "http": 403,
+          "case": "11",
+          "message": "OTP Blocked",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032512",
+          "http": 403,
+          "case": "12",
+          "message": "OTP Lifetime Expired",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032513",
+          "http": 403,
+          "case": "13",
+          "message": "OTP Sent To Cardholer",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032514",
+          "http": 403,
+          "case": "14",
+          "message": "Insufficient Funds",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032515",
+          "http": 403,
+          "case": "15",
+          "message": "Transaction Not Permitted.[reason]",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032516",
+          "http": 403,
+          "case": "16",
+          "message": "Suspend Transaction",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032517",
+          "http": 403,
+          "case": "17",
+          "message": "Token Limit Exceeded",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032518",
+          "http": 403,
+          "case": "18",
+          "message": "Inactive Card/Account/Customer",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032519",
+          "http": 403,
+          "case": "19",
+          "message": "Merchant Blacklisted",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032520",
+          "http": 403,
+          "case": "20",
+          "message": "Merchant Limit Exceed",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032521",
+          "http": 403,
+          "case": "21",
+          "message": "Set Limit Not Allowed",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032522",
+          "http": 403,
+          "case": "22",
+          "message": "Token Limit Invalid",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4032523",
+          "http": 403,
+          "case": "23",
+          "message": "Account Limit Exceed",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042500",
+          "http": 404,
+          "case": "00",
+          "message": "Invalid Transaction Status",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042501",
+          "http": 404,
+          "case": "01",
+          "message": "Transaction Not Found",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042502",
+          "http": 404,
+          "case": "02",
+          "message": "Invalid Routing",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042503",
+          "http": 404,
+          "case": "03",
+          "message": "Bank Not Supported By Switch",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042504",
+          "http": 404,
+          "case": "04",
+          "message": "Transaction Cancelled",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042505",
+          "http": 404,
+          "case": "05",
+          "message": "Merchant Is Not Registered For Card Registration Services",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042506",
+          "http": 404,
+          "case": "06",
+          "message": "Need To Request OTP",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042507",
+          "http": 404,
+          "case": "07",
+          "message": "Journey Not Found",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042508",
+          "http": 404,
+          "case": "08",
+          "message": "Invalid Merchant",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042509",
+          "http": 404,
+          "case": "09",
+          "message": "No Issuer",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042510",
+          "http": 404,
+          "case": "10",
+          "message": "Invalid API Transition",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042511",
+          "http": 404,
+          "case": "11",
+          "message": "Invalid Card/Account/Customer [info]/Virtual Account",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042512",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]",
+          "req": "M",
+          "status": "Reversal",
+          "conflicts": [
+            {
+              "source": "bri-briva-online-v1",
+              "value": "Invalid Bill/Virtual Account not Found"
+            }
+          ]
+        },
+        {
+          "code": "4042513",
+          "http": 404,
+          "case": "13",
+          "message": "Invalid Amount",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042514",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042515",
+          "http": 404,
+          "case": "15",
+          "message": "Invalid OTP",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042516",
+          "http": 404,
+          "case": "16",
+          "message": "Partner Not Found",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042517",
+          "http": 404,
+          "case": "17",
+          "message": "Invalid Terminal",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042518",
+          "http": 404,
+          "case": "18",
+          "message": "Inconsistent Request",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4042519",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4052500",
+          "http": 405,
+          "case": "00",
+          "message": "Requested Function Is Not Supported",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4052501",
+          "http": 405,
+          "case": "01",
+          "message": "Requested Opearation Is Not Allowed",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4092500",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict",
+          "req": "M",
+          "status": "Reversal"
+        },
+        {
+          "code": "4092501",
+          "http": 409,
+          "case": "01",
+          "message": "Duplicate partnerReferenceNo",
+          "req": "O",
+          "status": "Reversal"
+        },
+        {
+          "code": "4292500",
+          "http": 429,
+          "case": "00",
+          "message": "Too Many Requests",
+          "req": "O",
+          "status": "Suspend"
+        },
+        {
+          "code": "5002500",
+          "http": 500,
+          "case": "00",
+          "message": "General Error",
+          "req": "M",
+          "status": "Suspend"
+        },
+        {
+          "code": "5002501",
+          "http": 500,
+          "case": "01",
+          "message": "Internal Server Error",
+          "req": "O",
+          "status": "Suspend"
+        },
+        {
+          "code": "5002502",
+          "http": 500,
+          "case": "02",
+          "message": "External Server Error",
+          "req": "O",
+          "status": "Suspend"
+        },
+        {
+          "code": "5042500",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout",
+          "req": "M",
+          "status": "Suspend"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "bri-briva-online-v2",
+          "field": "path",
+          "value": "../{{version}}/transfer-va/payment"
+        },
+        {
+          "source": "bri-briva-online-v1",
+          "field": "path",
+          "value": "snap/v1.0/transfer-va/payment"
+        }
+      ],
+      "assumptions": [
+        "A25",
+        "A26",
+        "A28",
+        "A29",
+        "A30",
+        "A31"
+      ]
+    },
+    {
+      "id": "bri.channel-id",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-briva-online-v1"
+      ],
+      "values": [
+        {
+          "code": "00001",
+          "label": "teller"
+        },
+        {
+          "code": "00002",
+          "label": "ATM"
+        },
+        {
+          "code": "00003",
+          "label": "IB/NBMB/Brilink Mobile"
+        },
+        {
+          "code": "00004",
+          "label": "SMSB"
+        },
+        {
+          "code": "00005",
+          "label": "CMS/IBIZ"
+        },
+        {
+          "code": "00006",
+          "label": "EDC"
+        },
+        {
+          "code": "00007",
+          "label": "RTGS"
+        },
+        {
+          "code": "00008",
+          "label": "OTHER"
+        },
+        {
+          "code": "00009",
+          "label": "API"
+        }
+      ],
+      "assumptions": [
+        "A11",
+        "A28"
+      ]
+    },
+    {
+      "id": "bri.payment-flag-status",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "bri-briva-online-v2",
+        "bri-briva-online-v1"
+      ],
+      "values": [
+        {
+          "code": "00",
+          "label": "Success"
+        },
+        {
+          "code": "01",
+          "label": "Reject"
+        },
+        {
+          "code": "02",
+          "label": "Timeout"
+        }
+      ],
+      "assumptions": [
+        "A30",
+        "A31"
+      ]
+    },
+    {
+      "id": "aspi.va.trx-type",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "aspi-va"
+      ],
+      "values": [
+        {
+          "code": "C",
+          "label": "Closed Payment"
+        },
+        {
+          "code": "O",
+          "label": "Open Payment"
+        },
+        {
+          "code": "I",
+          "label": "Partial"
+        },
+        {
+          "code": "M",
+          "label": "Minimum"
+        },
+        {
+          "code": "L",
+          "label": "Maximum"
+        },
+        {
+          "code": "N",
+          "label": "Open Minimum"
+        },
+        {
+          "code": "X",
+          "label": "Open Maximum"
+        }
+      ],
+      "assumptions": [
+        "A20"
+      ]
+    },
+    {
+      "id": "aspi.va.paid-status",
+      "kind": "enum",
+      "scope": "out",
+      "sources": [
+        "aspi-va"
+      ],
+      "values": [
+        {
+          "code": "Y",
+          "label": "Paid"
+        },
+        {
+          "code": "N",
+          "label": "Not Paid"
+        }
+      ],
+      "assumptions": []
+    },
+    {
+      "id": "bri.bank-statement",
+      "kind": "endpoint",
+      "scope": "out",
+      "sources": [
+        "bri-bank-statement"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/snap/v1.1/bank-statement",
+      "serviceCode": "14",
+      "headers": "snap.headers.service",
+      "request": [
+        {
+          "name": "accountNo",
+          "type": "String",
+          "req": "M",
+          "length": "15",
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "SNAP BI: C, 16"
+            }
+          ]
+        },
+        {
+          "name": "fromDateTime",
+          "type": "String",
+          "req": "M",
+          "length": "25",
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "SNAP BI: O"
+            }
+          ]
+        },
+        {
+          "name": "toDateTime",
+          "type": "String",
+          "req": "M",
+          "length": "25",
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "SNAP BI: O"
+            }
+          ]
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "referenceNo",
+          "type": "String",
+          "req": "C",
+          "length": "64"
+        },
+        {
+          "name": "totalCreditEntries",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "totalCreditEntries.numberOfEntries",
+          "type": "Integer",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "totalCreditEntries.amount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "totalCreditEntries.amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "15,2"
+        },
+        {
+          "name": "totalCreditEntries.amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "totalDebitEntries",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "totalDebitEntries.numberOfEntries",
+          "type": "Integer",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "totalDebitEntries.amount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "totalDebitEntries.amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "15,2"
+        },
+        {
+          "name": "totalDebitEntries.amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "detailData[]",
+          "type": "Array of Objects",
+          "req": null,
+          "length": null
+        },
+        {
+          "name": "detailData[].detailBalance",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "detailData[].detailBalance.startAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "Array (sample)"
+            }
+          ]
+        },
+        {
+          "name": "detailData[].detailBalance.startAmount.amount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "detailData[].detailBalance.startAmount.amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "15,2"
+        },
+        {
+          "name": "detailData[].detailBalance.startAmount.amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "detailData[].detailBalance.endAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null,
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "Array (sample)"
+            }
+          ]
+        },
+        {
+          "name": "detailData[].detailBalance.endAmount.amount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "detailData[].detailBalance.endAmount.amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "15,2"
+        },
+        {
+          "name": "detailData[].detailBalance.endAmount.amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "detailData[].amount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "detailData[].amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "15,2"
+        },
+        {
+          "name": "detailData[].amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "detailData[].transactionDate",
+          "type": "String",
+          "req": "M",
+          "length": "25"
+        },
+        {
+          "name": "detailData[].remark",
+          "type": "String",
+          "req": "M",
+          "length": "256"
+        },
+        {
+          "name": "detailData[].transactionId",
+          "type": "String",
+          "req": "O",
+          "length": "35"
+        },
+        {
+          "name": "detailData[].type",
+          "type": "String",
+          "req": "M",
+          "length": "6",
+          "values": [
+            "CREDIT",
+            "DEBIT"
+          ],
+          "conflicts": [
+            {
+              "source": "bri-bank-statement",
+              "value": "Credit (sample)"
+            }
+          ]
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2001400",
+          "http": 200,
+          "case": "00",
+          "message": "Successfull"
+        },
+        {
+          "code": "4001401",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {fieldName}"
+        },
+        {
+          "code": "4001402",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {fieldName}"
+        },
+        {
+          "code": "4011400",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. Client"
+        },
+        {
+          "code": "4041401",
+          "http": 404,
+          "case": "01",
+          "message": "Transaction not found"
+        },
+        {
+          "code": "4041411",
+          "http": 404,
+          "case": "11",
+          "message": "Invalid Card/Account/Customer [Account No cannot be found]"
+        },
+        {
+          "code": "4091400",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5001400",
+          "http": 500,
+          "case": "00",
+          "message": "General Error"
+        },
+        {
+          "code": "5041400",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "assumptions": []
+    },
+    {
+      "id": "sim.statement-csv",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "one CSV per day: ledger credits of that day sorted by transaction_date",
+      "values": {
+        "path": "GET /admin/statements/{yyyy-MM-dd}.csv",
+        "columns": [
+          {
+            "name": "transaction_date",
+            "from": "bri.bank-statement#response.detailData[].transactionDate",
+            "format": "yyyy-MM-dd'T'HH:mm:ss+07:00"
+          },
+          {
+            "name": "transaction_id",
+            "from": "bri.bank-statement#response.detailData[].transactionId",
+            "format": "digits"
+          },
+          {
+            "name": "type",
+            "from": "bri.bank-statement#response.detailData[].type",
+            "format": "CREDIT"
+          },
+          {
+            "name": "amount",
+            "from": "bri.bank-statement#response.detailData[].amount.value",
+            "format": "0.00"
+          },
+          {
+            "name": "currency",
+            "from": "bri.bank-statement#response.detailData[].amount.currency",
+            "format": "IDR"
+          },
+          {
+            "name": "virtual_account_no",
+            "from": null,
+            "format": "digits, padding spaces removed"
+          },
+          {
+            "name": "remark",
+            "from": "bri.bank-statement#response.detailData[].remark",
+            "format": "BRIVA <vaNo> <name>"
+          }
+        ],
+        "encoding": "UTF-8",
+        "separator": ",",
+        "headerRow": true,
+        "lineEnding": "\n",
+        "quoting": "RFC 4180",
+        "totalRow": false,
+        "day": "00:00-24:00 Asia/Jakarta"
+      },
+      "assumptions": [
+        "A32",
+        "A33"
+      ]
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "items": [
+        "snap.sig.asymmetric-token",
+        "snap.sig.symmetric",
+        "snap.headers.token",
+        "snap.headers.service"
+      ],
+      "decision": "X-SIGNATURE (RSA and HMAC) is standard Base64 of the signature bytes."
+    },
+    {
+      "id": "A2",
+      "items": [
+        "snap.sig.symmetric"
+      ],
+      "decision": "Symmetric signature algorithm is HMAC-SHA512."
+    },
+    {
+      "id": "A3",
+      "items": [
+        "snap.sig.symmetric"
+      ],
+      "decision": "EndpointUrl in the string-to-sign is the path without query string."
+    },
+    {
+      "id": "A4",
+      "items": [
+        "snap.sig.body-hash"
+      ],
+      "decision": "An empty body hashes as SHA-256 of the empty string."
+    },
+    {
+      "id": "A5",
+      "items": [
+        "snap.sig.timestamp",
+        "snap.headers.token",
+        "snap.headers.service"
+      ],
+      "decision": "X-TIMESTAMP is accepted as ISO-8601 with an explicit offset, milliseconds optional; no offset is rejected with 400xx01."
+    },
+    {
+      "id": "A6",
+      "items": [
+        "snap.sig.timestamp"
+      ],
+      "decision": "Allowed clock skew is required config; outside it returns 401xx00."
+    },
+    {
+      "id": "A7",
+      "items": [
+        "snap.sig.timestamp"
+      ],
+      "decision": "Generated timestamps use yyyy-MM-dd'T'HH:mm:ss.SSS+07:00."
+    },
+    {
+      "id": "A8",
+      "items": [
+        "snap.external-id",
+        "snap.headers.service"
+      ],
+      "decision": "Inbound X-EXTERNAL-ID is 1-36 digits; outbound is 32 random digits."
+    },
+    {
+      "id": "A9",
+      "items": [
+        "snap.external-id"
+      ],
+      "decision": "X-EXTERNAL-ID is unique per client id and Jakarta calendar day across all services; reuse returns 409xx00."
+    },
+    {
+      "id": "A10",
+      "items": [
+        "snap.headers.service"
+      ],
+      "decision": "Inbound X-PARTNER-ID is required, alphanumeric up to 36, format-checked only."
+    },
+    {
+      "id": "A11",
+      "items": [
+        "snap.headers.service",
+        "bri.channel-id"
+      ],
+      "decision": "Inbound CHANNEL-ID must be 5 digits and is not checked against the list; outbound must be from the list."
+    },
+    {
+      "id": "A12",
+      "items": [
+        "bri.oauth.token-b2b"
+      ],
+      "decision": "Token success body has accessToken, tokenType BearerToken and expiresIn only, no responseCode."
+    },
+    {
+      "id": "A13",
+      "items": [
+        "snap.headers.token",
+        "snap.headers.service"
+      ],
+      "decision": "Responses carry X-TIMESTAMP; token responses also carry X-CLIENT-KEY."
+    },
+    {
+      "id": "A14",
+      "items": [
+        "bri.oauth.token-b2b"
+      ],
+      "decision": "Each token request issues a new token; earlier tokens stay valid until their own expiry; no rate limit."
+    },
+    {
+      "id": "A15",
+      "items": [
+        "snap.headers.service",
+        "aspi.va.create-va",
+        "aspi.va.update-va",
+        "aspi.va.inquiry-va",
+        "aspi.va.delete-va",
+        "aspi.va.inquiry-status"
+      ],
+      "decision": "Missing, unknown or expired bearer token returns 401xx01."
+    },
+    {
+      "id": "A16",
+      "items": [
+        "bri.oauth.token-b2b"
+      ],
+      "decision": "Missing mandatory token-call header returns 4007302; General Error is 5007300."
+    },
+    {
+      "id": "A17",
+      "items": [
+        "bri.va.number-layout"
+      ],
+      "decision": "partnerServiceId is 8 chars space-padded, customerNo 1-13 digits, virtualAccountNo their concatenation."
+    },
+    {
+      "id": "A18",
+      "items": [
+        "bri.va.number-layout",
+        "aspi.va.create-va",
+        "aspi.va.update-va",
+        "aspi.va.inquiry-va",
+        "aspi.va.delete-va",
+        "aspi.va.inquiry-status"
+      ],
+      "decision": "Inbound partnerServiceId must equal the configured value, else 404xx16."
+    },
+    {
+      "id": "A19",
+      "items": [
+        "aspi.va.create-va"
+      ],
+      "decision": "create-va requires partnerServiceId, customerNo, virtualAccountNo and totalAmount."
+    },
+    {
+      "id": "A20",
+      "items": [
+        "aspi.va.create-va",
+        "aspi.va.trx-type"
+      ],
+      "decision": "Only closed single-payment VAs: virtualAccountTrxType absent or C, otherwise 400xx01."
+    },
+    {
+      "id": "A21",
+      "items": [
+        "aspi.va.create-va",
+        "aspi.va.update-va",
+        "aspi.va.inquiry-va"
+      ],
+      "decision": "expiredDate is optional and must carry an offset; expired VA returns 404xx19."
+    },
+    {
+      "id": "A22",
+      "items": [
+        "aspi.va.create-va"
+      ],
+      "decision": "Active VA number or reused trxId on create-va returns 4092701."
+    },
+    {
+      "id": "A23",
+      "items": [
+        "aspi.va.update-va",
+        "aspi.va.inquiry-va",
+        "aspi.va.delete-va"
+      ],
+      "decision": "Lookup by virtualAccountNo; trxId mismatch or unknown VA returns 404xx12; paid VA on update/delete returns 404xx14."
+    },
+    {
+      "id": "A24",
+      "items": [
+        "aspi.va.inquiry-status"
+      ],
+      "decision": "Match by virtualAccountNo then paymentRequestId; paid 2002600 flag 00, unpaid 4042601, unknown 4042612; one object returned."
+    },
+    {
+      "id": "A25",
+      "items": [
+        "bri.briva-online.payment"
+      ],
+      "decision": "Bank-hosted VA payment is notified with the same payment call, carrying the create-va trxId."
+    },
+    {
+      "id": "A26",
+      "items": [
+        "bri.briva-online.inquiry",
+        "bri.briva-online.payment",
+        "aspi.oauth.token-b2b-outbound"
+      ],
+      "decision": "Partner endpoints are {base-url}/v1.0/...; any prefix belongs in the base URL."
+    },
+    {
+      "id": "A27",
+      "items": [
+        "aspi.oauth.token-b2b-outbound"
+      ],
+      "decision": "The bank gets its partner token via the B2B flow, X-CLIENT-KEY = bank client id, RSA-signed with the bank key."
+    },
+    {
+      "id": "A28",
+      "items": [
+        "bri.briva-online.inquiry",
+        "bri.briva-online.payment",
+        "bri.channel-id"
+      ],
+      "decision": "Outbound X-PARTNER-ID is the bank client id, CHANNEL-ID from config, channelCode its integer value."
+    },
+    {
+      "id": "A29",
+      "items": [
+        "bri.briva-online.inquiry",
+        "bri.briva-online.payment"
+      ],
+      "decision": "Outbound sends sourceBankCode 002, inquiry amount 0.00 IDR, no passApp/idApp/hashedSourceAccountNo; paymentRequestId equals inquiryRequestId."
+    },
+    {
+      "id": "A30",
+      "items": [
+        "bri.briva-online.payment",
+        "bri.payment-flag-status"
+      ],
+      "decision": "additionalInfo is parsed at top level or inside virtualAccountData; paymentFlagStatus is read as a string."
+    },
+    {
+      "id": "A31",
+      "items": [
+        "bri.briva-online.payment",
+        "bri.payment-flag-status"
+      ],
+      "decision": "2002500 with flag 00 credits; listed 4xx or flag 01 reverses; 429/5xx/timeout/unlisted or flag 02 suspends with credit kept."
+    },
+    {
+      "id": "A32",
+      "items": [
+        "sim.statement-csv"
+      ],
+      "decision": "Statement transaction_id is a bank journal id distinct from the partner trxId."
+    },
+    {
+      "id": "A33",
+      "items": [
+        "sim.statement-csv",
+        "snap.external-id"
+      ],
+      "decision": "Day boundary is 00:00-24:00 Asia/Jakarta."
+    },
+    {
+      "id": "A34",
+      "items": [
+        "aspi.va.create-va",
+        "aspi.va.update-va",
+        "aspi.va.inquiry-va",
+        "aspi.va.delete-va",
+        "aspi.va.inquiry-status",
+        "aspi.va.update-status-va",
+        "aspi.va.get-report"
+      ],
+      "decision": "Bank-hosted VA paths are the ASPI paths under BRI's /snap/v1.0 prefix."
+    }
+  ]
+}

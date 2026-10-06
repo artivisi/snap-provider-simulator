@@ -1,6 +1,6 @@
 # Implementation Plan — v0.1
 
-Target: image pullable by **12 Okt 2026** (first training run). Scope = Labs 1–7 in CLAUDE.md. QRIS,
+Target: image pullable by **12 Okt 2026**. Scope = the capabilities listed in CLAUDE.md. QRIS,
 auto-pay and the payment-gateway integration are out of scope for v0.1.
 
 ## 1. Sources and what may be reused
@@ -23,7 +23,7 @@ Signature code is written fresh from the public standard, using JDK crypto only:
 - HMAC-SHA512 string-to-sign
 - lowercase hex SHA-256 of the body
 - X.509 public key PEM parsing
-- **PKCS#8 private key PEM parsing**, which Lab 4 needs to sign outbound calls
+- **PKCS#8 private key PEM parsing**, needed to sign outbound bank-to-partner calls
 - **A JSON minifier.** It works at the token level and strips whitespace outside strings. A Jackson `readTree` round-trip is not used, because it can re-render numbers and escapes and so change the hash.
 
 ## 2. Stack
@@ -33,7 +33,7 @@ Signature code is written fresh from the public standard, using JDK crypto only:
 - JDK crypto only (no BouncyCastle). The README tech-stack row needs correcting.
 - Thymeleaf + vendored htmx for the admin UI, with plain CSS and no Tailwind build step
 - spring-boot-starter-actuator for the compose healthcheck
-- Tests: JUnit 5, AssertJ, RestAssured. Lab 4 outbound tests use a test-only
+- Tests: JUnit 5, AssertJ, RestAssured. Outbound bank-to-partner tests use a test-only
   "fake partner" controller in the same app context.
 - Package: `com.artivisi.snapsimulator`
 - README/UI disclaimer: simulates BRI's publicly documented SNAP VA behaviour; not affiliated with or endorsed by PT Bank Rakyat Indonesia
@@ -46,14 +46,14 @@ maps env vars; there are no literal values for secrets or paths.
 
 ```yaml
 simulator:
-  diagnostic-mode: ${SIMULATOR_DIAGNOSTIC_MODE}            # true in training
-  token-ttl: ${SIMULATOR_TOKEN_TTL}                        # e.g. 15m; short (2m) for Lab 3 re-auth
+  diagnostic-mode: ${SIMULATOR_DIAGNOSTIC_MODE}            # true: failed signature checks return the expected string-to-sign
+  token-ttl: ${SIMULATOR_TOKEN_TTL}                        # e.g. 15m; set short to exercise client re-auth
   timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}              # e.g. 5m
   partner-service-id: ${SIMULATOR_PARTNER_SERVICE_ID}      # VA prefix, both directions (docs/bri A17, A18)
-  inbound:                                                 # partner -> simulator (Labs 1–3, 6)
+  inbound:                                                 # partner -> simulator
     client-id: ${SIMULATOR_CLIENT_ID}
     client-secret: ${SIMULATOR_CLIENT_SECRET}
-  outbound:                                                # simulator -> partner (Labs 4–7)
+  outbound:                                                # simulator -> partner
     base-url: ${SIMULATOR_PARTNER_BASE_URL}
     client-id: ${SIMULATOR_BANK_CLIENT_ID}                 # bank's identity at the partner app
     client-secret: ${SIMULATOR_BANK_CLIENT_SECRET}
@@ -65,8 +65,8 @@ simulator:
 
 Key files are loaded at startup. A missing or unparsable key stops startup
 with a message that names the path. The bank public key is served at
-`GET /admin/keys/bank-public.pem` so participants can configure Lab 4
-verification.
+`GET /admin/keys/bank-public.pem` so partner apps can verify
+bank-to-partner calls.
 
 ## 4. Endpoints
 
@@ -76,14 +76,14 @@ Final paths, methods and service codes come from the linked sources. BRI uses th
 `/snap/v1.0/...` prefix. Verified 2026-10-06: 73 against BRI OAuth; 26–31
 against the ASPI Virtual Account standard (BRI's own pages are gated).
 
-| Path | Lab | SNAP service code | Source |
-|---|---|---|---|
-| `POST /snap/v1.0/access-token/b2b` | 1 | 73 | BRI |
-| `POST /snap/v1.0/transfer-va/create-va` | 3 | 27 | ASPI |
-| `PUT /snap/v1.0/transfer-va/update-va` | 3 | 28 | ASPI |
-| `POST /snap/v1.0/transfer-va/inquiry-va` | 3 | 30 | ASPI |
-| `DELETE /snap/v1.0/transfer-va/delete-va` (JSON body) | 3 | 31 | ASPI |
-| `POST /snap/v1.0/transfer-va/status` | 6 | 26 | ASPI |
+| Path | SNAP service code | Source |
+|---|---|---|
+| `POST /snap/v1.0/access-token/b2b` | 73 | BRI |
+| `POST /snap/v1.0/transfer-va/create-va` | 27 | ASPI |
+| `PUT /snap/v1.0/transfer-va/update-va` | 28 | ASPI |
+| `POST /snap/v1.0/transfer-va/inquiry-va` | 30 | ASPI |
+| `DELETE /snap/v1.0/transfer-va/delete-va` (JSON body) | 31 | ASPI |
+| `POST /snap/v1.0/transfer-va/status` | 26 | ASPI |
 
 Not implemented in v0.1: `PUT .../transfer-va/update-status` (29);
 `.../transfer-va/report` (35, ASPI overview says GET, its sample uses POST).
@@ -112,7 +112,7 @@ the inputs to the signature, not its output.
 
 ### SNAP outbound (simulator → partner, biller-hosted VA)
 
-The flow starts from the admin action "customer pays at ATM"
+The flow starts from the admin action "simulate customer payment"
 (`POST /admin/biller-payments`, body `{virtualAccountNo, amount}`). The
 partner endpoint paths and payloads follow BRIVA Online.
 
@@ -122,19 +122,19 @@ partner endpoint paths and payloads follow BRIVA Online.
 4. Record a ledger credit (§6) and the full exchange log entry.
 
 `POST /admin/biller-payments/{id}/resend` resends step 3 with the same
-`X-EXTERNAL-ID` and the same body (Lab 5).
+`X-EXTERNAL-ID` and the same body (idempotency test).
 
 ### Admin (JSON API + HTML pages at `/admin`)
 
 - VAs (bank-hosted): list, and pay (`POST /admin/vas/{vaNo}/pay`)
 - Biller payments: trigger, resend
-- Exchange log: every inbound and outbound call with headers, body, string-to-sign, and response. This is the main teaching view.
+- Exchange log: every inbound and outbound call with headers, body, string-to-sign, and response.
 - Error injection rules: add, list, clear
 - Statement: `GET /admin/statements/{yyyy-MM-dd}.csv`
-- Lab 7 scenario seeder: `POST /admin/scenarios/reconciliation`
+- Reconciliation scenario seeder: `POST /admin/scenarios/reconciliation`
 - `DELETE /admin/state` resets all state
 
-## 5. Error injection (Lab 6)
+## 5. Error injection
 
 Each rule is `{target, type, params, remaining}`. A rule is consumed per
 matching call, with `remaining` defaulting to 1, which is set explicitly in
@@ -149,7 +149,7 @@ the request.
 | `LATE_NOTIFICATION` | outbound payment | delay step 3 by N ms |
 | `DROP_NOTIFICATION` | outbound payment | skip step 3; the ledger still credits |
 
-## 6. State and statement (Lab 7)
+## 6. State and statement
 
 In-memory `ConcurrentHashMap`s hold tokens, external ids, VAs, biller
 payments, ledger entries, the exchange log (a bounded ring buffer), and
@@ -174,7 +174,7 @@ The reconciliation seeder produces, for today:
 - `Dockerfile`: multi-stage, `maven:3.9-eclipse-temurin-25` → `eclipse-temurin:25-jre`, non-root, `EXPOSE 9090`. Copy the boot jar by its exact name; the payment-gateway glob also matches the plain jar.
 - `.github/workflows/release.yml`: on tag `v*`, run `mvn verify`, then buildx **linux/amd64 + linux/arm64**, then push `<registry>/snap-provider-simulator:{version}`. Most users run amd64, and the maintainer's local Docker has no working buildx, so CI builds the image.
 - `compose.yml` example, with the bank key mounted from `./keys`.
-- README updates: the Lab 4 flow, the diagnostic mode, the statement CSV, and the config table.
+- README updates: the bank-to-partner flow, the diagnostic mode, the statement CSV, and the config table.
 
 ## 8. Schedule
 
@@ -182,13 +182,13 @@ The reconciliation seeder produces, for today:
 |---|---|
 | 6–7 Okt | Capture specs locally (done); skeleton, config, signature lib + tests (minifier, PKCS#8), token endpoint, diagnostic mode, key upload |
 | 8 Okt | VA create/update/inquiry/delete/status, inbound pipeline, external-id and skew checks |
-| 9 Okt | Outbound Lab 4 flow, resend, exchange log, admin UI |
+| 9 Okt | Outbound bank-to-partner flow, resend, exchange log, admin UI |
 | 10 Okt | Error injection, ledger, CSV, reconciliation seeder |
 | 11 Okt | Dockerfile, release workflow, tag `v0.1.0`, pull + run on a clean amd64 machine |
-| 12 Okt | Buffer; training setup guide pins the tag |
+| 12 Okt | Buffer |
 
 ## 9. Decisions (2026-10-06)
 
 1. **Registry: Docker Hub**, `artivisi/snap-provider-simulator`. This needs the repo secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, which Endy adds.
-2. **Participant public key: uploaded through the admin UI** (`POST /admin/client-key`, PEM). The simulator starts without one. Until a key is uploaded, token calls fail with `401xx00` and the message "no client public key registered; upload at /admin". This is an unconfigured state, not a default value. `simulator.inbound.client-public-key-path` is dropped.
-3. **Lab 7 anomalies**: as described in §6.
+2. **Partner public key: uploaded through the admin UI** (`POST /admin/client-key`, PEM). The simulator starts without one. Until a key is uploaded, token calls fail with `401xx00` and the message "no client public key registered; upload at /admin". This is an unconfigured state, not a default value. `simulator.inbound.client-public-key-path` is dropped.
+3. **Reconciliation anomalies**: as described in §6.

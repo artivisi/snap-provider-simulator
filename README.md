@@ -257,7 +257,6 @@ Configure the gateway to use the corresponding private key when calling the simu
 | Project | Role |
 |---|---|
 | [payment-gateway](https://github.com/artivisi/payment-gateway) | The self-hosted VA gateway this simulator tests. |
-| SNAP integration training labs | Hands-on SNAP training; drives the bank-as-caller, inquiry-status and statement-export features. |
 | [payment-simulator](https://github.com/artivisi/payment-simulator) | Simulates the bank-internal layer (ISO 8583, switching, HSM) underneath SNAP. Different abstraction level. |
 
 ## YouTube Series
