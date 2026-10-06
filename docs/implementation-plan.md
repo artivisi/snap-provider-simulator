@@ -13,14 +13,17 @@ written down in `docs/bri/`.
 | Source | Use |
 |---|---|
 | BRI public docs (OAuth, BRIVA Transfer-to-VA, BRIVA Online) | Field-level specs, summarised in our own words into `docs/bri/` **before coding**. The portal is JS-rendered: a plain fetch returns an empty page, so capture it in a browser. |
-| `payment-gateway` `566e33f^:.../adapter/snap/SnapSignatureHelper.java` | Generic SNAP signatures (RSA `clientId\|timestamp`, HMAC-SHA512, `sha256HexLower`, X.509 PEM parse). Port it. |
 | SNAP standard (public BI/ASPI pages) | Fallback where BRI docs are silent. Link to them; never commit registration-gated documents. |
 
 Nothing else is a source: no non-public bank specs, no client code.
 
-The signature helper has gaps that we write ourselves:
+Signature code is written fresh from the public standard, using JDK crypto only:
 
-- **PKCS#8 private key PEM parsing**, which Lab 4 needs to sign outbound calls.
+- RSA `clientId|timestamp` sign and verify
+- HMAC-SHA512 string-to-sign
+- lowercase hex SHA-256 of the body
+- X.509 public key PEM parsing
+- **PKCS#8 private key PEM parsing**, which Lab 4 needs to sign outbound calls
 - **A JSON minifier.** It works at the token level and strips whitespace outside strings. A Jackson `readTree` round-trip is not used, because it can re-render numbers and escapes and so change the hash.
 
 ## 2. Stack

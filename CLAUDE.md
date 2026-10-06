@@ -14,8 +14,7 @@ Internal context (engagements, deadlines, private source locations) lives in
 1. SNAP integration training labs. Participants pull the Docker image; they do
    not build this repo. First run: image must be pullable by **12 Okt 2026**.
 2. [payment-gateway](https://github.com/artivisi/payment-gateway): the
-   self-hosted VA gateway. Its generic SNAP signature code is reusable (see the
-   plan §1 for the exact path).
+   self-hosted VA gateway. Same stack (Java 25, Spring Boot 4.1).
 3. The payment-gateway YouTube series.
 
 QRIS endpoints in README are out of scope for v0.1.
