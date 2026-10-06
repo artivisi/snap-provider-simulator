@@ -1,0 +1,5 @@
+CLAUDE.local.md
+target/
+.idea/
+*.iml
+.DS_Store
