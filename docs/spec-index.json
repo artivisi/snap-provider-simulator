@@ -1,6 +1,5 @@
 {
   "schemaVersion": 1,
-  "captured": "2026-10-06",
   "sources": [
     {
       "id": "bri-oauth",
@@ -8,7 +7,9 @@
       "title": "APIDOCS Oauth SNAP BI (Internal version v1.1)",
       "url": "https://developers.bri.co.id/en/snap-bi/apidocs-oauth-snap-bi",
       "docVersion": "v1.0",
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:57:22.384Z",
+      "contentSha256": "e124d1ca11459ccdd686d99962744d68584b5cff3e7fdecf64d9bd706adfa2de"
     },
     {
       "id": "bri-briva-online-v2",
@@ -16,7 +17,9 @@
       "title": "APIDOCS Virtual Account Briva Online SNAP BI",
       "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-account-briva-online-snap-bi",
       "docVersion": "v2.5",
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:57:31.965Z",
+      "contentSha256": "d34b442358566d4cab6369d04ad267afd9344950c100e30500f30afe06bf5dc3"
     },
     {
       "id": "bri-briva-online-v1",
@@ -24,7 +27,9 @@
       "title": "APIDOCS Virtual Account/Briva Online SNAP BI V1.0",
       "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accountbriva-online-snap-bi-v10",
       "docVersion": "v2.4",
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:57:39.307Z",
+      "contentSha256": "ca6cd93d85081f09b6c3dd7d5fbc3c4c72f3c41ec87af1cb796be30b1f299bdf"
     },
     {
       "id": "bri-transfer-va",
@@ -32,7 +37,9 @@
       "title": "APIDOCS Virtual Account/Transfer to VA SNAP BI",
       "url": "https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accounttransfer-va-snap-bi",
       "docVersion": "v2.3",
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:57:46.503Z",
+      "contentSha256": "9dac902b000b8051080f7c74b0063c94404133eb10fa8df9b63d2ecd5d62f41d"
     },
     {
       "id": "bri-bank-statement",
@@ -40,7 +47,9 @@
       "title": "API Bank Statement SNAP BI",
       "url": "https://developers.bri.co.id/en/snap-bi/api-bank-statement-snap-bi",
       "docVersion": "v1.5",
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:57:53.903Z",
+      "contentSha256": "9f65937fb50e00312ea45b45bb7b5216923ff0dce4986a5458f5a4b57dae8919"
     },
     {
       "id": "aspi-keamanan",
@@ -48,7 +57,9 @@
       "title": "Keamanan",
       "url": "https://apidevportal.aspi-indonesia.or.id/api-services/keamanan",
       "docVersion": null,
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:58:00.793Z",
+      "contentSha256": "bec832bcd4b47387f65df3f5e4e6e70c628b550e99585c8ef3a38006e2010ad1"
     },
     {
       "id": "aspi-va",
@@ -56,7 +67,9 @@
       "title": "Transfer Kredit - Virtual Account",
       "url": "https://apidevportal.aspi-indonesia.or.id/api-services/transfer-kredit/virtual-account",
       "docVersion": null,
-      "access": "public"
+      "access": "public",
+      "captured": "2026-10-06T12:58:08.737Z",
+      "contentSha256": "8ba0d6313520a155baebfc6e0260d298a957a279446e853ca61c1c9a15ce4a68"
     },
     {
       "id": "bri-briva-ws",

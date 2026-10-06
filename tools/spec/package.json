@@ -1,0 +1,12 @@
+{
+  "name": "snap-spec-capture",
+  "private": true,
+  "type": "module",
+  "description": "Captures public SNAP spec pages listed in docs/spec-index.json into docs/sources/ (gitignored)",
+  "scripts": {
+    "capture": "node capture.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}

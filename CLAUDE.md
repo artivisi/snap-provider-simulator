@@ -95,4 +95,12 @@ standard; generic SNAP signature code. NOT allowed:
   `@SpecRef("<item id>#<request|response>.<field>")`.
 - A test enforces both directions: every `@SpecRef` resolves to an index entry,
   and every item with `"scope": "in"` has at least one `@SpecRef`.
-- Upstream changes: re-capture the pages locally and diff against the index.
+- Tooling in `tools/spec/`:
+  - `capture.mjs` (Playwright): captures every public source in the index
+    into gitignored `docs/sources/<source-id>.md`.
+    Run with `cd tools/spec && npm ci && npx playwright install chromium && npm run capture`.
+  - `gen_index.py`: the index facts live in this script; it regenerates
+    `docs/spec-index.json` and stamps each source's capture time and sha256.
+  - `gen_index.py --check`: lists changed upstream pages and fails if the
+    index is stale. When a page changes, diff its capture, update the facts in
+    `gen_index.py`, and regenerate.

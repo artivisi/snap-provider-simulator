@@ -5,3 +5,4 @@ target/
 .DS_Store
 docs/sources/
 docs/bri/
+tools/spec/node_modules/
