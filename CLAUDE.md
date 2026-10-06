@@ -25,20 +25,26 @@ The simulator emulates **BRI's publicly documented SNAP VA behaviour**. BRI
 documents BOTH VA models (bank-hosted and biller-hosted), so one profile covers
 every lab.
 
-Source docs (portal is JS-rendered — open in a browser, capture field-level
-request/response specs into `docs/bri/` as OUR OWN summaries before coding):
+Spec content is not ours and is never committed. `docs/sources/` (raw
+Playwright captures; the portals are JS-rendered) and `docs/bri/` (working
+notes, assumptions A1–A33) are local and gitignored. Tracked files only link to
+the original pages below.
 
 - OAuth: https://developers.bri.co.id/en/snap-bi/apidocs-oauth-snap-bi
-- Create SNAP key: https://developers.bri.co.id/en/snap-bi/create-snap-key
-- BRIVA, bank-hosted (partner → BRI): "Virtual Account/Transfer to VA SNAP BI
-  v1.0" https://developers.bri.co.id/en/snap-bi/apidocs-virtual-account-transfer-va-snap-bi-v1.0
-  (`/snap/v1.0/transfer-va/create-va` and siblings)
+- Bank-hosted VA (create/update/inquiry/delete-va, status): BRI's page
+  (BRIVA WS) is login-gated and NOT used. Follow the public ASPI standard:
+  https://apidevportal.aspi-indonesia.or.id/api-services/transfer-kredit/virtual-account
+  with BRI's public conventions (`/snap/v1.0` prefix, headers, codes).
+- Security standard: https://apidevportal.aspi-indonesia.or.id/api-services/keamanan
+- BRI SNAP bank statement (informs the Lab 7 CSV):
+  https://developers.bri.co.id/en/snap-bi/api-bank-statement-snap-bi
 - BRIVA Online, biller-hosted (BRI → partner inquiry/payment):
   https://developers.bri.co.id/en/snap-bi/apidocs-virtual-accountbriva-online-snap-bi-v10
 
 Match BRI's paths, headers, field names, VA number layout and response codes
-as documented. Where the docs are silent, follow the public SNAP 1.0.2
-standard and note the assumption in `docs/bri/`.
+as documented. Where BRI is silent or gated, follow the public ASPI standard
+and record the assumption (A-numbered) in local `docs/bri/README.md`. Never use
+login-gated pages, even if an account becomes available.
 
 ## What the training labs require
 
@@ -46,10 +52,10 @@ standard and note the assumption in `docs/bri/`.
 |---|---|---|
 | 1 | B2B access token verifying SHA256withRSA over `clientId\|timestamp`; **diagnostic mode** returning the expected string-to-sign on failure (teaching aid, real BRI doesn't) | OAuth |
 | 2 | HMAC-SHA512 symmetric signature verification on service calls, same diagnostic mode (expected string-to-sign, minified body hash) | OAuth |
-| 3 | create / update / inquiry / delete VA; token TTL expiry to force re-auth | BRIVA (Transfer to VA) |
+| 3 | create / update / inquiry / delete VA; token TTL expiry to force re-auth | ASPI VA standard |
 | 4 | **Bank-as-caller**: simulator gets a token FROM the partner app (signed with the simulator's bank private key), then calls the partner app's inquiry and payment endpoints. Triggered from admin UI/API ("customer pays at ATM") | BRIVA Online |
 | 5 | Resend the same payment with the same `X-EXTERNAL-ID` | BRIVA Online |
-| 6 | Failure injection: timeout after processing, slow response, invalid signature, late notification; plus payment status inquiry so participants resolve unknown outcomes | BRIVA (status/report endpoints as documented) |
+| 6 | Failure injection: timeout after processing, slow response, invalid signature, late notification; plus payment status inquiry so participants resolve unknown outcomes | ASPI VA standard (inquiry status, 26) |
 | 7 | **Statement CSV export** (mutasi) per day incl. a payment whose notification was dropped, an amount mismatch, a duplicate. Format is ours (BRI statements are not part of this API) | — |
 
 Also validate `X-TIMESTAMP` skew and `X-EXTERNAL-ID` uniqueness per day on

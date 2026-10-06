@@ -8,12 +8,12 @@ auto-pay and the payment-gateway integration are out of scope for v0.1.
 Bank profile: **BRI** (see CLAUDE.md). Paths, headers, field names, VA
 number layout and response codes follow BRI's public docs. Where those docs
 are silent, the SNAP 1.0.2 standard applies, and each such assumption is
-written down in `docs/bri/`.
+written down in local notes (`docs/bri/`, gitignored: spec content is not committed).
 
 | Source | Use |
 |---|---|
-| BRI public docs (OAuth, BRIVA Transfer-to-VA, BRIVA Online) | Field-level specs, summarised in our own words into `docs/bri/` **before coding**. The portal is JS-rendered: a plain fetch returns an empty page, so capture it in a browser. |
-| SNAP standard (public BI/ASPI pages) | Fallback where BRI docs are silent. Link to them; never commit registration-gated documents. |
+| BRI public docs (OAuth, BRIVA Online, Transfer-to-VA, Bank Statement) | Field-level specs. Linked from CLAUDE.md; captured locally with Playwright (JS-rendered portal), never committed. |
+| SNAP standard (public BI/ASPI pages) | Fallback where BRI docs are silent. **Bank-hosted VA ops (create/update/inquiry/delete VA) and inquiry status come from the public ASPI Virtual Account standard**, because BRI's pages for them are login-gated; BRI's public conventions (path prefix, headers, VA layout, response code style) are applied on top. Link to them; never commit registration-gated documents. |
 
 Nothing else is a source: no non-public bank specs, no client code.
 
@@ -49,6 +49,7 @@ simulator:
   diagnostic-mode: ${SIMULATOR_DIAGNOSTIC_MODE}            # true in training
   token-ttl: ${SIMULATOR_TOKEN_TTL}                        # e.g. 15m; short (2m) for Lab 3 re-auth
   timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}              # e.g. 5m
+  partner-service-id: ${SIMULATOR_PARTNER_SERVICE_ID}      # VA prefix, both directions (docs/bri A17, A18)
   inbound:                                                 # partner -> simulator (Labs 1–3, 6)
     client-id: ${SIMULATOR_CLIENT_ID}
     client-secret: ${SIMULATOR_CLIENT_SECRET}
@@ -57,7 +58,6 @@ simulator:
     client-id: ${SIMULATOR_BANK_CLIENT_ID}                 # bank's identity at the partner app
     client-secret: ${SIMULATOR_BANK_CLIENT_SECRET}
     private-key-path: ${SIMULATOR_BANK_PRIVATE_KEY_PATH}
-    partner-service-id: ${SIMULATOR_PARTNER_SERVICE_ID}
     channel-id: ${SIMULATOR_CHANNEL_ID}
     connect-timeout: ${SIMULATOR_OUTBOUND_CONNECT_TIMEOUT}
     read-timeout: ${SIMULATOR_OUTBOUND_READ_TIMEOUT}
@@ -72,26 +72,29 @@ verification.
 
 ### SNAP inbound (partner → simulator)
 
-Final paths, methods and service codes come from `docs/bri/`. BRI uses the
-`/snap/v1.0/...` prefix. The service codes below are standard SNAP values and
-must be checked against BRI's docs.
+Final paths, methods and service codes come from the linked sources. BRI uses the
+`/snap/v1.0/...` prefix. Verified 2026-10-06: 73 against BRI OAuth; 26–31
+against the ASPI Virtual Account standard (BRI's own pages are gated).
 
-| Path (BRI doc) | Lab | SNAP service code |
-|---|---|---|
-| `POST /snap/v1.0/access-token/b2b` | 1 | 73 |
-| `POST /snap/v1.0/transfer-va/create-va` | 3 | 27 |
-| `PUT /snap/v1.0/transfer-va/update-va` (method per BRI doc) | 3 | 28 |
-| `POST /snap/v1.0/transfer-va/inquiry-va` | 3 | 30 |
-| `DELETE /snap/v1.0/transfer-va/delete-va` (method per BRI doc) | 3 | 31 |
-| status / report endpoint as BRI documents it | 6 | 26 / 35 |
+| Path | Lab | SNAP service code | Source |
+|---|---|---|---|
+| `POST /snap/v1.0/access-token/b2b` | 1 | 73 | BRI |
+| `POST /snap/v1.0/transfer-va/create-va` | 3 | 27 | ASPI |
+| `PUT /snap/v1.0/transfer-va/update-va` | 3 | 28 | ASPI |
+| `POST /snap/v1.0/transfer-va/inquiry-va` | 3 | 30 | ASPI |
+| `DELETE /snap/v1.0/transfer-va/delete-va` (JSON body) | 3 | 31 | ASPI |
+| `POST /snap/v1.0/transfer-va/status` | 6 | 26 | ASPI |
+
+Not implemented in v0.1: `PUT .../transfer-va/update-status` (29);
+`.../transfer-va/report` (35, ASPI overview says GET, its sample uses POST).
 
 The pipeline for every service call is implemented once as a filter or
 interceptor, in this order:
 
 1. `Authorization: Bearer` present, known, and not expired. Otherwise `401xx01`.
 2. `X-TIMESTAMP` parses and is within the skew. Otherwise `400xx01`/`401xx00`.
-3. `X-SIGNATURE` HMAC check over `METHOD:requestURI(+query):token:sha256hex(minify(body)):timestamp`. Otherwise `401xx00`.
-4. `X-EXTERNAL-ID` is unique for (clientId, date, service). Otherwise `409xx00`.
+3. `X-SIGNATURE` HMAC-SHA512 (Base64) check over `METHOD:path:token:sha256hex(minify(body)):timestamp`; path without query string (`docs/bri` A1, A3). Otherwise `401xx00`.
+4. `X-EXTERNAL-ID` is unique for (clientId, Asia/Jakarta date), across services (`docs/bri` A9). Otherwise `409xx00`.
 5. Error injection hook (§5).
 6. Handler.
 
@@ -153,10 +156,10 @@ payments, ledger entries, the exchange log (a bounded ring buffer), and
 injection rules.
 
 The **ledger** is the bank's truth: one credit per real payment. The CSV is
-a projection of the ledger for one day, sorted by time, with a header row:
+a projection of the ledger for one day, sorted by time. Columns and their mapping are in `docs/bri/statement.md`:
 
 ```
-tanggal,waktu,no_referensi,virtual_account,nama,keterangan,kredit
+transaction_date,transaction_id,type,amount,currency,virtual_account_no,remark
 ```
 
 The reconciliation seeder produces, for today:
@@ -177,7 +180,7 @@ The reconciliation seeder produces, for today:
 
 | Day | Work |
 |---|---|
-| 6–7 Okt | Capture BRI docs into `docs/bri/`; skeleton, config, signature lib + tests (minifier, PKCS#8), token endpoint, diagnostic mode, key upload |
+| 6–7 Okt | Capture specs locally (done); skeleton, config, signature lib + tests (minifier, PKCS#8), token endpoint, diagnostic mode, key upload |
 | 8 Okt | VA create/update/inquiry/delete/status, inbound pipeline, external-id and skew checks |
 | 9 Okt | Outbound Lab 4 flow, resend, exchange log, admin UI |
 | 10 Okt | Error injection, ledger, CSV, reconciliation seeder |
