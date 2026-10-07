@@ -35,17 +35,10 @@ Signature code is written fresh from the public standard, using JDK crypto only:
 - PostgreSQL 18; Spring Data JPA; Flyway owns the schema (`spring-boot-flyway`,
   `flyway-core`, `flyway-database-postgresql`); `ddl-auto: none`, `open-in-view: false`
 - Spring `RestClient` for bank-to-partner calls
-- Spring Security: form login for two areas, partner portal and operator admin; BCrypt password hashes; CSRF on UI forms; SNAP endpoints stay token/signature-authenticated
+- Spring Security: form login for two areas, partner portal and operator admin; BCrypt; CSRF on UI forms; SNAP endpoints stay token/signature-authenticated. Test-tool level only (see the standard)
 - spring-boot-starter-actuator for the compose healthcheck
-- Tests:
-  - Unit: JUnit 5, AssertJ (signatures with check values, minifier, PEM, VA layout)
-  - Integration (`*IntegrationTest`): `@SpringBootTest` on a random port against a
-    singleton Testcontainers `PostgreSQLContainer("postgres:18")`; RestAssured;
-    a test-only fake partner controller in the same context for bank-to-partner calls
-  - Functional (`*FunctionalTest`, Failsafe): Testcontainers runs the built image
-    plus PostgreSQL on a shared network; covers fail-fast startup, migrations,
-    healthcheck, key mount, a token + create-va smoke test, and a bank-to-partner
-    call to a partner endpoint on the host. Fails, not skips, if the image is absent
+- Practices, gates (traceability, ≥70% line/branch coverage, SpotBugs zero),
+  test layers, CI, container and release: `docs/engineering-standard.md`
 - Package: `com.artivisi.snapsimulator`
 - README/UI disclaimer: simulates BRI's publicly documented SNAP VA behaviour; not affiliated with or endorsed by PT Bank Rakyat Indonesia
 
@@ -258,27 +251,33 @@ The reconciliation seeder (per partner) produces, for today:
 
 ## 7. Delivery
 
-- `Dockerfile`: multi-stage, `maven:3.9-eclipse-temurin-25` → `eclipse-temurin:25-jre`, non-root, `EXPOSE 9090`. Copy the boot jar by its exact name; the payment-gateway glob also matches the plain jar.
-- `.github/workflows/release.yml`: on tag `v*`, run `mvn verify` (unit + integration), build the image, run the functional tests against it, then buildx **linux/amd64 + linux/arm64**, then push `<registry>/snap-provider-simulator:{version}`. Most users run amd64, and the maintainer's local Docker has no working buildx, so CI builds the image.
-- `compose.yml` example: simulator + `postgres:18` with a named volume and `pg_isready` healthcheck; bank key mounted from `./keys`.
-- README updates: the bank-to-partner flow, the diagnostic mode, the statement CSV, and the config table.
+Per `docs/engineering-standard.md` (Container, CI, Versioning):
+
+- Balaka-style layered Dockerfile on `azul/zulu-openjdk-alpine:25-jre`, port 9090.
+- `ci.yml`, `docker-publish.yml` (amd64 + arm64, Docker Hub + GHCR, SBOM,
+  provenance, image tests before push), `release.yml`.
+- `compose.yml` example: simulator + `postgres:18-alpine` with a named volume and
+  `pg_isready` healthcheck; bank key mounted from `./keys`.
+- README: capabilities, onboarding procedure, config table, BRI disclaimer.
+- First release `2026.10-RELEASE`; consumers pin image tag `2026.10`.
 
 ## 8. Schedule
 
 | Day | Work |
 |---|---|
 | 6 Okt | Spec capture and index (done) |
-| 7 Okt | Skeleton, config, Flyway schema, Testcontainers base test, `@SpecRef` + traceability test, signature lib + tests |
+| 7 Okt | Skeleton (pom gates: JaCoCo 70%, SpotBugs), config, Flyway schema, Testcontainers + Playwright bases, `@SpecRef` + traceability test, signature lib + tests, `ci.yml` |
 | 8 Okt | Security (portal + admin login), sign-up, credentials, key upload, token endpoint, diagnostic mode, inbound check chain |
 | 9 Okt | VA create/update/inquiry/delete/status, bank-to-partner flow + test connection, resend, checklist |
 | 10 Okt | Exchange log, error injection, ledger, CSV, reconciliation seeder, portal + admin UI pages |
-| 11 Okt | Dockerfile, functional tests, release workflow, tag `v0.1.0`, pull + run on a clean amd64 machine |
+| 11 Okt | Dockerfile, image tests, publish + release workflows, release notes, tag `2026.10-RELEASE`, pull + run on a clean amd64 machine |
 | 12 Okt | Setup verification only; no buffer left |
 
 ## 9. Decisions (2026-10-06)
 
-1. **Registry: Docker Hub**, `artivisi/snap-provider-simulator`. This needs the repo secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, which Endy adds.
+1. **Registry: Docker Hub** `artivisi/snap-provider-simulator` (needs repo secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`) and GHCR (`GITHUB_TOKEN`).
 2. **Partner public key: uploaded by the partner in the portal** (PEM), replaceable. (Supersedes the 2026-10-06 single-key upload decision.)
 3. **Reconciliation anomalies**: as described in §6.
 4. **PostgreSQL, multi-partner** (2026-10-07): state persists across restarts and several partner apps share one simulator, each with its own credentials, keys, settings and data.
 5. **Self-service onboarding** (2026-10-07): open sign-up; simulator assigns `partnerServiceId`; operator admin login from env. Supersedes admin-only registration. Included in v0.1.
+6. **Engineering standard** (2026-10-07): Balaka practices scaled to a test tool; CalVer; English UI; no ZAP or production hardening; gates are spec↔code↔test traceability and ≥70% coverage. See `docs/engineering-standard.md`.

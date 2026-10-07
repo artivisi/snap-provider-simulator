@@ -82,7 +82,10 @@ standard; generic SNAP signature code. NOT allowed:
 
 ## Conventions
 
-- Java 25, Spring Boot 4, Maven, PostgreSQL (Flyway), Testcontainers for integration and image tests.
+- **Follow `docs/engineering-standard.md`** (Balaka practices scaled to a test
+  tool): gates, layout, tests, CI, container, CalVer releases, Conventional Commits.
+- Java 25, Spring Boot 4, Maven, PostgreSQL (Flyway), Thymeleaf + htmx + plain
+  CSS, English UI, Testcontainers + Playwright.
 - No default values for required config (DB, bank key path, operator login,
   timeouts, skew):
   fail at startup with a clear message. Partner settings are required at
@@ -97,8 +100,10 @@ standard; generic SNAP signature code. NOT allowed:
   enums, signature formulas, and our assumptions (A-ids). No source prose.
 - Code marks what it implements with `@SpecRef("<item id>")` or
   `@SpecRef("<item id>#<request|response>.<field>")`.
-- A test enforces both directions: every `@SpecRef` resolves to an index entry,
-  and every item with `"scope": "in"` has at least one `@SpecRef`.
+- `SpecTraceabilityTest` enforces spec ↔ code ↔ test: every `@SpecRef` resolves
+  to an index entry, and every item with `"scope": "in"` has at least one
+  `@SpecRef` in `src/main` and one in `src/test`. Our own capabilities are
+  `sim.*` items.
 - Tooling in `tools/spec/`:
   - `capture.mjs` (Playwright): captures every public source in the index
     into gitignored `docs/sources/<source-id>.md`.

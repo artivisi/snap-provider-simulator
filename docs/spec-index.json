@@ -5444,7 +5444,7 @@
       "sources": [],
       "formula": "one CSV per day: ledger credits of that day sorted by transaction_date",
       "values": {
-        "path": "GET /admin/statements/{yyyy-MM-dd}.csv",
+        "path": "GET /portal/api/statements/{yyyy-MM-dd}.csv",
         "columns": [
           {
             "name": "transaction_date",
@@ -5494,6 +5494,142 @@
         "A32",
         "A33"
       ]
+    },
+    {
+      "id": "sim.portal.signup",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "open sign-up with email + password; one account per partner app",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.credentials",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.key-generate",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "generate RSA-2048 key pair; store public key; private key PKCS#8 PEM one-time download, never stored",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.key-upload",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "accept X.509 SubjectPublicKeyInfo RSA >= 2048 PEM; reject private keys without storing or logging them; show openssl commands",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.endpoint",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "partner base URL + bank client id/secret, all or none; test connection obtains a token from the partner",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.settings",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "per-partner tokenTtl and diagnosticMode, required, editable",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.checklist",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "onboarding items stamped with first-success time",
+      "assumptions": []
+    },
+    {
+      "id": "sim.portal.reset",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "delete a partner's data, keep its registration",
+      "assumptions": []
+    },
+    {
+      "id": "sim.admin.partners",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "operator login from env; list partners with checklist; disable, enable, reset, delete",
+      "assumptions": []
+    },
+    {
+      "id": "sim.bank-key.publish",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "bank public key served at /keys/bank-public.pem",
+      "assumptions": []
+    },
+    {
+      "id": "sim.diagnostic-mode",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "failed signature checks return expected string-to-sign and body hashes, never the signature; flags hex-looking signatures",
+      "assumptions": []
+    },
+    {
+      "id": "sim.biller-payment.trigger",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "simulate customer payment: token, inquiry, payment to the partner; record ledger credit",
+      "assumptions": []
+    },
+    {
+      "id": "sim.biller-payment.resend",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "resend a payment with the same X-EXTERNAL-ID and body",
+      "assumptions": []
+    },
+    {
+      "id": "sim.va.pay",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "pay a bank-hosted VA from the portal",
+      "assumptions": []
+    },
+    {
+      "id": "sim.error-injection",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "per-partner rules: TIMEOUT_AFTER_PROCESSING, SLOW_RESPONSE, HTTP_ERROR, INVALID_SIGNATURE, LATE_NOTIFICATION, DROP_NOTIFICATION",
+      "assumptions": []
+    },
+    {
+      "id": "sim.exchange-log",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "every inbound and outbound call with headers, body, string-to-sign, response, timing",
+      "assumptions": []
+    },
+    {
+      "id": "sim.reconciliation-seeder",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "seed today's payments incl. dropped notification, amount mismatch, duplicate notification",
+      "assumptions": []
     }
   ],
   "assumptions": [

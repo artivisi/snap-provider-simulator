@@ -576,7 +576,7 @@ def col(name, from_, fmt):
 item("sim.statement-csv", "rule", "in", [],
      formula="one CSV per day: ledger credits of that day sorted by transaction_date",
      values=OrderedDict([
-         ("path", "GET /admin/statements/{yyyy-MM-dd}.csv"),
+         ("path", "GET /portal/api/statements/{yyyy-MM-dd}.csv"),
          ("columns", [
              col("transaction_date", "bri.bank-statement#response.detailData[].transactionDate",
                  "yyyy-MM-dd'T'HH:mm:ss+07:00"),
@@ -590,6 +590,29 @@ item("sim.statement-csv", "rule", "in", [],
          ("encoding", "UTF-8"), ("separator", ","), ("headerRow", True), ("lineEnding", "\n"),
          ("quoting", "RFC 4180"), ("totalRow", False), ("day", "00:00-24:00 Asia/Jakarta"),
      ]))
+
+# ---- simulator capabilities (ours, no upstream source) ----
+SIM = [
+    ("sim.portal.signup", "open sign-up with email + password; one account per partner app"),
+    ("sim.portal.credentials", "assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret"),
+    ("sim.portal.key-generate", "generate RSA-2048 key pair; store public key; private key PKCS#8 PEM one-time download, never stored"),
+    ("sim.portal.key-upload", "accept X.509 SubjectPublicKeyInfo RSA >= 2048 PEM; reject private keys without storing or logging them; show openssl commands"),
+    ("sim.portal.endpoint", "partner base URL + bank client id/secret, all or none; test connection obtains a token from the partner"),
+    ("sim.portal.settings", "per-partner tokenTtl and diagnosticMode, required, editable"),
+    ("sim.portal.checklist", "onboarding items stamped with first-success time"),
+    ("sim.portal.reset", "delete a partner's data, keep its registration"),
+    ("sim.admin.partners", "operator login from env; list partners with checklist; disable, enable, reset, delete"),
+    ("sim.bank-key.publish", "bank public key served at /keys/bank-public.pem"),
+    ("sim.diagnostic-mode", "failed signature checks return expected string-to-sign and body hashes, never the signature; flags hex-looking signatures"),
+    ("sim.biller-payment.trigger", "simulate customer payment: token, inquiry, payment to the partner; record ledger credit"),
+    ("sim.biller-payment.resend", "resend a payment with the same X-EXTERNAL-ID and body"),
+    ("sim.va.pay", "pay a bank-hosted VA from the portal"),
+    ("sim.error-injection", "per-partner rules: TIMEOUT_AFTER_PROCESSING, SLOW_RESPONSE, HTTP_ERROR, INVALID_SIGNATURE, LATE_NOTIFICATION, DROP_NOTIFICATION"),
+    ("sim.exchange-log", "every inbound and outbound call with headers, body, string-to-sign, response, timing"),
+    ("sim.reconciliation-seeder", "seed today's payments incl. dropped notification, amount mismatch, duplicate notification"),
+]
+for sid, rule in SIM:
+    item(sid, "rule", "in", [], formula=rule)
 
 # ---------------- assumptions ----------------
 VA_IN = ["aspi.va.create-va", "aspi.va.update-va", "aspi.va.inquiry-va", "aspi.va.delete-va",
