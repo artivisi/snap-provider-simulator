@@ -51,7 +51,8 @@ Never use login-gated pages, even if an account becomes available.
 
 | Capability | Spec |
 |---|---|
-| Partner registry: multiple partner apps, each with generated client id/secret, its public key, VA prefix, token TTL, diagnostic switch, optional outbound endpoint; all state scoped per partner | ours |
+| **Partner onboarding portal**: open sign-up; simulator assigns VA prefix and issues client id/secret; partner uploads its public key, registers its endpoint (with test connection), sets token TTL and diagnostic switch; onboarding checklist; all state scoped per partner | ours |
+| Operator admin: list partners and checklist progress, disable, reset, delete | ours |
 | B2B access token, SHA256withRSA over `clientId\|timestamp` | BRI OAuth |
 | HMAC-SHA512 signature verification on service calls | BRI OAuth, ASPI security |
 | **Diagnostic mode** (per-partner switch): failed signature checks return the expected string-to-sign and body hashes, never the signature. Real banks don't do this | ours |
@@ -82,7 +83,8 @@ standard; generic SNAP signature code. NOT allowed:
 ## Conventions
 
 - Java 25, Spring Boot 4, Maven, PostgreSQL (Flyway), Testcontainers for integration and image tests.
-- No default values for required config (DB, bank key path, timeouts, skew):
+- No default values for required config (DB, bank key path, operator login,
+  timeouts, skew):
   fail at startup with a clear message. Partner settings are required at
   registration; none are defaulted.
 - Docker image built and pushed from this repo (Docker Hub, multi-arch).

@@ -35,6 +35,7 @@ Signature code is written fresh from the public standard, using JDK crypto only:
 - PostgreSQL 18; Spring Data JPA; Flyway owns the schema (`spring-boot-flyway`,
   `flyway-core`, `flyway-database-postgresql`); `ddl-auto: none`, `open-in-view: false`
 - Spring `RestClient` for bank-to-partner calls
+- Spring Security: form login for two areas, partner portal and operator admin; BCrypt password hashes; CSRF on UI forms; SNAP endpoints stay token/signature-authenticated
 - spring-boot-starter-actuator for the compose healthcheck
 - Tests:
   - Unit: JUnit 5, AssertJ (signatures with check values, minifier, PEM, VA layout)
@@ -67,6 +68,9 @@ simulator:
   timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}                  # e.g. 5m
   bank:
     private-key-path: ${SIMULATOR_BANK_PRIVATE_KEY_PATH}       # one bank identity for all partners
+  operator:
+    username: ${SIMULATOR_OPERATOR_USERNAME}                   # /admin login
+    password: ${SIMULATOR_OPERATOR_PASSWORD}
   outbound:
     connect-timeout: ${SIMULATOR_OUTBOUND_CONNECT_TIMEOUT}
     read-timeout: ${SIMULATOR_OUTBOUND_READ_TIMEOUT}
@@ -74,26 +78,49 @@ simulator:
 
 The bank key is loaded at startup; a missing or unparsable key stops startup
 with a message that names the path. The bank public key is served at
-`GET /admin/keys/bank-public.pem` so partner apps can verify bank-to-partner
+`GET /keys/bank-public.pem` (public) so partner apps can verify bank-to-partner
 calls.
 
-### Partners (registered at runtime, stored in PostgreSQL)
+### Partner onboarding (self-service portal, `/portal`)
 
 Several partner apps share one simulator; every row of state belongs to one
-partner. A partner is registered through the admin UI/API
-(`POST /admin/partners`):
+partner. Partners onboard themselves, following the technical steps of a bank
+developer portal:
 
-| Field | Required | Meaning |
-|---|---|---|
-| `name` | yes | display name |
-| `publicKeyPem` | yes | verifies the partner's token-request signature; replaceable later |
-| `partnerServiceId` | yes | VA prefix, unique across partners (routes a VA number to its partner) |
-| `tokenTtl` | yes | per partner, so one partner can exercise re-auth with a short TTL |
-| `diagnosticMode` | yes | per partner |
-| `outbound.baseUrl`, `outbound.bankClientId`, `outbound.bankClientSecret` | all or none | the partner's endpoint and the credentials the partner issued to the bank; without them, bank-to-partner actions for this partner fail with an explicit error |
+1. **Sign up** (open): email + password, then log in. One account = one partner app.
+2. **Application issued**: the simulator assigns a unique `partnerServiceId`
+   (VA prefix) and generates `clientId` and `clientSecret`. The secret is shown
+   once; it can be regenerated, which invalidates the old one.
+3. **SNAP key**: partner uploads its RSA public key (PEM). Rejected unless it
+   parses as RSA ≥ 2048 bits. Replaceable. Bank public key downloadable on the
+   same page.
+4. **Partner endpoint** (for bank-to-partner calls): base URL plus the client id
+   and secret the partner issued to the bank, all or none. "Test connection"
+   makes the bank request a token from the partner and shows the exchange.
+5. **Settings**: `tokenTtl` and `diagnosticMode`, both required at sign-up
+   (no defaults); editable.
 
-The simulator generates `clientId` and `clientSecret` on registration and shows
-them once in full, as a bank would issue them.
+**Onboarding checklist**, each item stamped with the time it first succeeded:
+
+| Item | Passes when |
+|---|---|
+| Key registered | public key uploaded |
+| Token obtained | first successful `access-token/b2b` |
+| Signed call | first service call passing the signature check |
+| VA created | first successful `create-va` |
+| Partner endpoint reachable | bank obtained a token from the partner |
+| Inquiry answered | first bank-to-partner inquiry with a 2xx `responseCode` |
+| Payment acknowledged | first bank-to-partner payment with `paymentFlagStatus` `00` |
+
+Partner workspace (logged-in partner sees only its own data): credentials,
+key, endpoint, settings, checklist, VAs, simulate customer payment, exchange
+log, error injection, statement CSV, reset data.
+
+### Operator admin (`/admin`)
+
+Login from env (`simulator.operator.*`). Lists partners with checklist
+progress; can disable/enable a partner (disabled partners get `401xx00` on every
+call), reset a partner's data, and delete a partner.
 ## 4. Endpoints
 
 ### SNAP inbound (partner → simulator)
@@ -138,8 +165,8 @@ the inputs to the signature, not its output.
 
 ### SNAP outbound (simulator → partner, biller-hosted VA)
 
-The flow starts from the admin action "simulate customer payment"
-(`POST /admin/biller-payments`, body `{virtualAccountNo, amount}`). The
+The flow starts from the portal action "simulate customer payment"
+(`POST /portal/api/biller-payments`, body `{virtualAccountNo, amount, channelId}`). The
 partner endpoint paths and payloads follow BRIVA Online.
 
 1. Access token from the partner app, signed with the "BRI" private key. The token is cached until it expires.
@@ -147,20 +174,23 @@ partner endpoint paths and payloads follow BRIVA Online.
 3. Payment.
 4. Record a ledger credit (§6) and the full exchange log entry.
 
-`POST /admin/biller-payments/{id}/resend` resends step 3 with the same
+`POST /portal/api/biller-payments/{id}/resend` resends step 3 with the same
 `X-EXTERNAL-ID` and the same body (idempotency test).
 
-### Admin (JSON API + HTML pages at `/admin`)
+### Portal and admin routes
 
-- Partners: register, list, edit settings, replace public key, regenerate secret
-- Everything below is scoped to one partner (`/admin/partners/{id}/...`)
-- VAs (bank-hosted): list, and pay (`POST /admin/partners/{id}/vas/{vaNo}/pay`)
-- Biller payments: trigger, resend
-- Exchange log: every inbound and outbound call with headers, body, string-to-sign, and response.
-- Error injection rules: add, list, clear
-- Statement: `GET /admin/statements/{yyyy-MM-dd}.csv`
-- Reconciliation scenario seeder: `POST /admin/scenarios/reconciliation`
-- `DELETE /admin/partners/{id}/state` deletes the partner's data, keeps its registration
+Each portal page has a JSON counterpart under `/portal/api/...` with the same
+session auth, so tests and scripts can drive it.
+
+- Portal: sign-up, login, credentials (regenerate secret), key upload, bank key
+  download (`GET /portal/keys/bank-public.pem`, also public at
+  `GET /keys/bank-public.pem`), endpoint + test connection, settings,
+  checklist
+- Portal workspace: VAs and pay action, simulate customer payment
+  (`virtualAccountNo`, `amount`, `channelId`), resend, exchange log,
+  error-injection rules, statement `.../statements/{yyyy-MM-dd}.csv`,
+  reconciliation seeder, reset data
+- Admin: partner list, disable/enable, reset, delete
 
 ## 5. Error injection
 
@@ -183,7 +213,7 @@ PostgreSQL tables, each keyed by partner:
 
 | Table | Holds |
 |---|---|
-| `partner` | registration (§3) |
+| `partner` | account (email, password hash, enabled), credentials, key, endpoint, settings, checklist timestamps (§3) |
 | `access_token` | tokens issued to partners, with expiry |
 | `external_id` | (partner, Jakarta day, X-EXTERNAL-ID) unique |
 | `virtual_account` | bank-hosted VAs and their state |
@@ -223,15 +253,16 @@ The reconciliation seeder (per partner) produces, for today:
 |---|---|
 | 6 Okt | Spec capture and index (done) |
 | 7 Okt | Skeleton, config, Flyway schema, Testcontainers base test, `@SpecRef` + traceability test, signature lib + tests |
-| 8 Okt | Partner registry + admin API, token endpoint, diagnostic mode, inbound check chain, VA create/update/inquiry/delete/status |
-| 9 Okt | Bank-to-partner flow, resend, exchange log, admin UI |
-| 10 Okt | Error injection, ledger, CSV, reconciliation seeder |
+| 8 Okt | Security (portal + admin login), sign-up, credentials, key upload, token endpoint, diagnostic mode, inbound check chain |
+| 9 Okt | VA create/update/inquiry/delete/status, bank-to-partner flow + test connection, resend, checklist |
+| 10 Okt | Exchange log, error injection, ledger, CSV, reconciliation seeder, portal + admin UI pages |
 | 11 Okt | Dockerfile, functional tests, release workflow, tag `v0.1.0`, pull + run on a clean amd64 machine |
-| 12 Okt | Buffer |
+| 12 Okt | Setup verification only; no buffer left |
 
 ## 9. Decisions (2026-10-06)
 
 1. **Registry: Docker Hub**, `artivisi/snap-provider-simulator`. This needs the repo secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`, which Endy adds.
-2. **Partner public key: provided at partner registration** through the admin UI/API (PEM), replaceable later. (Supersedes the 2026-10-06 single-key upload decision.)
+2. **Partner public key: uploaded by the partner in the portal** (PEM), replaceable. (Supersedes the 2026-10-06 single-key upload decision.)
 3. **Reconciliation anomalies**: as described in §6.
 4. **PostgreSQL, multi-partner** (2026-10-07): state persists across restarts and several partner apps share one simulator, each with its own credentials, keys, settings and data.
+5. **Self-service onboarding** (2026-10-07): open sign-up; simulator assigns `partnerServiceId`; operator admin login from env. Supersedes admin-only registration. Included in v0.1.
