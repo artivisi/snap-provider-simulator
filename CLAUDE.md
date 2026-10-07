@@ -51,9 +51,10 @@ Never use login-gated pages, even if an account becomes available.
 
 | Capability | Spec |
 |---|---|
-| B2B access token, SHA256withRSA over `clientId\|timestamp`; partner public key uploaded via admin UI | BRI OAuth |
+| Partner registry: multiple partner apps, each with generated client id/secret, its public key, VA prefix, token TTL, diagnostic switch, optional outbound endpoint; all state scoped per partner | ours |
+| B2B access token, SHA256withRSA over `clientId\|timestamp` | BRI OAuth |
 | HMAC-SHA512 signature verification on service calls | BRI OAuth, ASPI security |
-| **Diagnostic mode** (config switch): failed signature checks return the expected string-to-sign and body hashes, never the signature. Real banks don't do this | ours |
+| **Diagnostic mode** (per-partner switch): failed signature checks return the expected string-to-sign and body hashes, never the signature. Real banks don't do this | ours |
 | Bank-hosted VA: create / update / inquiry / delete, inquiry status; configurable token TTL | ASPI VA |
 | **Bank-to-partner calls**: simulator obtains a token from the partner app (signed with the simulator's bank key), then calls the partner's inquiry and payment endpoints; triggered from admin UI/API | BRIVA Online |
 | Resend a payment with the same `X-EXTERNAL-ID` | BRIVA Online |
@@ -80,9 +81,10 @@ standard; generic SNAP signature code. NOT allowed:
 
 ## Conventions
 
-- Java 25, Spring Boot 4, Maven, in-memory state.
-- No default values for required config (client id, secret, key paths, partner
-  base URL): fail at startup with a clear message.
+- Java 25, Spring Boot 4, Maven, PostgreSQL (Flyway), Testcontainers for integration and image tests.
+- No default values for required config (DB, bank key path, timeouts, skew):
+  fail at startup with a clear message. Partner settings are required at
+  registration; none are defaulted.
 - Docker image built and pushed from this repo (Docker Hub, multi-arch).
 - Commit messages end with the Co-Authored-By line given by the harness.
 

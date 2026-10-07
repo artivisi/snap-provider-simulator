@@ -5639,7 +5639,7 @@
         "aspi.va.delete-va",
         "aspi.va.inquiry-status"
       ],
-      "decision": "Inbound partnerServiceId must equal the configured value, else 404xx16."
+      "decision": "Inbound partnerServiceId must equal the calling partner's registered value, else 404xx16."
     },
     {
       "id": "A19",
@@ -5718,7 +5718,7 @@
         "bri.briva-online.payment",
         "bri.channel-id"
       ],
-      "decision": "Outbound X-PARTNER-ID is the bank client id, CHANNEL-ID from config, channelCode its integer value."
+      "decision": "Outbound X-PARTNER-ID is the bank client id the partner issued; CHANNEL-ID is a required parameter of the payment action; channelCode is its integer value."
     },
     {
       "id": "A29",
