@@ -51,7 +51,7 @@ Never use login-gated pages, even if an account becomes available.
 
 | Capability | Spec |
 |---|---|
-| **Partner onboarding portal**: open sign-up; simulator assigns VA prefix and issues client id/secret; partner uploads its public key, registers its endpoint (with test connection), sets token TTL and diagnostic switch; onboarding checklist; all state scoped per partner | ours |
+| **Partner onboarding portal**: open sign-up; simulator assigns VA prefix and issues client id/secret; partner generates a key pair in the simulator (private key one-time download) or uploads a locally generated public key (openssl commands shown), registers its endpoint (with test connection), sets token TTL and diagnostic switch; onboarding checklist; all state scoped per partner | ours |
 | Operator admin: list partners and checklist progress, disable, reset, delete | ours |
 | B2B access token, SHA256withRSA over `clientId\|timestamp` | BRI OAuth |
 | HMAC-SHA512 signature verification on service calls | BRI OAuth, ASPI security |

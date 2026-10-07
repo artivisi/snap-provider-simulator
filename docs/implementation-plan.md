@@ -91,9 +91,25 @@ developer portal:
 2. **Application issued**: the simulator assigns a unique `partnerServiceId`
    (VA prefix) and generates `clientId` and `clientSecret`. The secret is shown
    once; it can be regenerated, which invalidates the old one.
-3. **SNAP key**: partner uploads its RSA public key (PEM). Rejected unless it
-   parses as RSA ≥ 2048 bits. Replaceable. Bank public key downloadable on the
-   same page.
+3. **SNAP key**: the key page offers two ways; either one replaces the
+   current key. The bank public key is downloadable on the same page.
+   - **Generate in the simulator**: RSA-2048 key pair; the public key is stored,
+     and the private key (PKCS#8 PEM) is offered as a one-time download and
+     never stored. Leaving the page without downloading means generating again.
+   - **Generate locally and upload**: the page shows the commands, then accepts
+     the public key PEM (file or paste):
+     ```
+     openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private.pem
+     openssl pkey -in private.pem -pubout -out public.pem
+     ```
+     `genpkey` writes PKCS#8 (`BEGIN PRIVATE KEY`), which JCA's
+     `PKCS8EncodedKeySpec` reads directly; the page states this, and notes
+     that `openssl genrsa` on OpenSSL 1.1 writes PKCS#1 (`BEGIN RSA PRIVATE KEY`)
+     and shows `openssl pkcs8 -topk8 -nocrypt -in old.pem -out private.pem`
+     to convert.
+   - Upload validation: rejected unless it parses as an X.509
+     `SubjectPublicKeyInfo` RSA key ≥ 2048 bits. A pasted private key is
+     rejected with a message saying so, and is not stored or logged.
 4. **Partner endpoint** (for bank-to-partner calls): base URL plus the client id
    and secret the partner issued to the bank, all or none. "Test connection"
    makes the bank request a token from the partner and shows the exchange.
