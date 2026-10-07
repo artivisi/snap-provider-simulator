@@ -1,7 +1,7 @@
-# Implementation Plan — v0.1
+# Implementation Plan — 2026.10-RELEASE
 
 Target: image pullable by **12 Okt 2026**. Scope = the capabilities listed in CLAUDE.md. QRIS,
-auto-pay and the payment-gateway integration are out of scope for v0.1.
+auto-pay and the payment-gateway integration are out of scope for 2026.10-RELEASE.
 
 ## 1. Sources and what may be reused
 
@@ -147,7 +147,7 @@ against the ASPI Virtual Account standard (BRI's own pages are gated).
 | `DELETE /snap/v1.0/transfer-va/delete-va` (JSON body) | 31 | ASPI |
 | `POST /snap/v1.0/transfer-va/status` | 26 | ASPI |
 
-Not implemented in v0.1: `PUT .../transfer-va/update-status` (29);
+Not implemented in 2026.10-RELEASE: `PUT .../transfer-va/update-status` (29);
 `.../transfer-va/report` (35, ASPI overview says GET, its sample uses POST).
 
 The pipeline for every service call is implemented once as a filter or
@@ -233,7 +233,7 @@ PostgreSQL tables, each keyed by partner:
 
 Tokens the bank obtains from partners stay in memory: they are a cache and
 are re-requested after a restart. Exchange log rows are deleted only by the
-partner reset; no automatic retention in v0.1.
+partner reset; no automatic retention in 2026.10-RELEASE.
 
 The **ledger** is the bank's truth: one credit per real payment. The CSV is
 a projection of the ledger for one day, sorted by time. Columns and their mapping are in `docs/bri/statement.md`:
@@ -279,5 +279,5 @@ Per `docs/engineering-standard.md` (Container, CI, Versioning):
 2. **Partner public key: uploaded by the partner in the portal** (PEM), replaceable. (Supersedes the 2026-10-06 single-key upload decision.)
 3. **Reconciliation anomalies**: as described in §6.
 4. **PostgreSQL, multi-partner** (2026-10-07): state persists across restarts and several partner apps share one simulator, each with its own credentials, keys, settings and data.
-5. **Self-service onboarding** (2026-10-07): open sign-up; simulator assigns `partnerServiceId`; operator admin login from env. Supersedes admin-only registration. Included in v0.1.
+5. **Self-service onboarding** (2026-10-07): open sign-up; simulator assigns `partnerServiceId`; operator admin login from env. Supersedes admin-only registration. Included in 2026.10-RELEASE.
 6. **Engineering standard** (2026-10-07): Balaka practices scaled to a test tool; CalVer; English UI; no ZAP or production hardening; gates are spec↔code↔test traceability and ≥70% coverage. See `docs/engineering-standard.md`.

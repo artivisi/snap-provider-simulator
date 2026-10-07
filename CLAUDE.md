@@ -18,7 +18,7 @@ context (why features exist, deadlines, private source locations) lives in
 2. [payment-gateway](https://github.com/artivisi/payment-gateway): the
    self-hosted VA gateway. Same stack (Java 25, Spring Boot 4.1).
 
-QRIS endpoints in README are out of scope for v0.1.
+QRIS endpoints in README are out of scope for 2026.10-RELEASE.
 
 ## Bank profile: BRI
 
@@ -47,7 +47,7 @@ as documented. Where BRI is silent or gated, follow the public ASPI standard
 and record the decision as an assumption (A-id) in `docs/spec-index.json`.
 Never use login-gated pages, even if an account becomes available.
 
-## Capabilities (v0.1)
+## Capabilities (2026.10-RELEASE)
 
 | Capability | Spec |
 |---|---|
