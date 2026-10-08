@@ -34,7 +34,7 @@ Signature code is written fresh from the public standard, using JDK crypto only:
 - Thymeleaf + vendored htmx for the admin UI, with plain CSS and no Tailwind build step
 - PostgreSQL 18; Spring Data JPA; Flyway owns the schema (`spring-boot-flyway`,
   `flyway-core`, `flyway-database-postgresql`); `ddl-auto: none`, `open-in-view: false`
-- Spring `RestClient` for bank-to-partner calls
+- JDK `HttpClient` for bank-to-partner calls (raw status, body and timeouts are recorded as they happened)
 - Spring Security: form login for two areas, partner portal and operator admin; BCrypt; CSRF on UI forms; SNAP endpoints stay token/signature-authenticated. Test-tool level only (see the standard)
 - spring-boot-starter-actuator for the compose healthcheck
 - Practices, gates (traceability, ≥70% line/branch coverage, SpotBugs zero),

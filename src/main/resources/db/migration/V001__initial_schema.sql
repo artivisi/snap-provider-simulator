@@ -87,6 +87,7 @@ CREATE TABLE payment (
     external_id         VARCHAR(36),
     notified_amount     NUMERIC(18,2),
     notification_status VARCHAR(16)   NOT NULL,
+    notification_body   TEXT,
     paid_at             TIMESTAMPTZ   NOT NULL
 );
 CREATE INDEX payment_partner_idx ON payment (partner_id, paid_at);

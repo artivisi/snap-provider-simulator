@@ -40,6 +40,13 @@ class SnapTimestampTest {
     }
 
     @Test
+    @DisplayName("Body date-times use 25 characters, no milliseconds")
+    void formatsSeconds() {
+        assertThat(SnapTimestamp.formatSeconds(Instant.parse("2026-10-08T03:00:00.005Z")))
+                .isEqualTo("2026-10-08T10:00:00+07:00").hasSize(25);
+    }
+
+    @Test
     @DisplayName("Skew check is inclusive in both directions")
     void skew() {
         Instant now = Instant.parse("2026-10-08T03:00:00Z");

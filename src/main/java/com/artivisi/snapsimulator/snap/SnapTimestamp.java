@@ -16,6 +16,7 @@ public final class SnapTimestamp {
     public static final ZoneId JAKARTA = ZoneId.of("Asia/Jakarta");
 
     private static final DateTimeFormatter OUTPUT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final DateTimeFormatter OUTPUT_SECONDS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private SnapTimestamp() {
     }
@@ -27,6 +28,11 @@ public final class SnapTimestamp {
 
     public static String format(Instant instant) {
         return OUTPUT.format(instant.atZone(JAKARTA));
+    }
+
+    /** Date-time body fields of length 25 (expiredDate, lastUpdateDate, paymentDate, trxDateTime). */
+    public static String formatSeconds(Instant instant) {
+        return OUTPUT_SECONDS.format(instant.atZone(JAKARTA));
     }
 
     public static boolean withinSkew(OffsetDateTime timestamp, Instant now, Duration skew) {

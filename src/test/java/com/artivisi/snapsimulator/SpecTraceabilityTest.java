@@ -31,11 +31,7 @@ class SpecTraceabilityTest {
      * that is already traced in main and test fails the build so the list only shrinks.
      */
     private static final Set<String> PENDING = Set.of(
-            "bri.va.number-layout", "aspi.oauth.token-b2b-outbound", "aspi.va.create-va", "aspi.va.update-va",
-            "aspi.va.inquiry-va", "aspi.va.delete-va", "aspi.va.inquiry-status", "bri.briva-online.inquiry",
-            "bri.briva-online.payment", "bri.channel-id", "bri.payment-flag-status", "aspi.va.trx-type",
-            "sim.statement-csv", "sim.biller-payment.trigger", "sim.biller-payment.resend", "sim.va.pay",
-            "sim.error-injection", "sim.reconciliation-seeder");
+            "sim.statement-csv", "sim.error-injection", "sim.reconciliation-seeder");
 
     private static final Map<String, JsonNode> ITEMS = new HashMap<>();
     private static final List<Ref> MAIN = new ArrayList<>();

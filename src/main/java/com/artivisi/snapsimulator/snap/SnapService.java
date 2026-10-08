@@ -66,6 +66,15 @@ public enum SnapService {
         return new ResponseCode(409, code, "00", "Conflict");
     }
 
+    /** 404 with a service-specific case code, e.g. 12 invalid bill, 14 paid bill, 16 partner not found. */
+    public ResponseCode notFound(String caseCode, String message) {
+        return new ResponseCode(404, code, caseCode, message);
+    }
+
+    public ResponseCode conflict(String caseCode, String message) {
+        return new ResponseCode(409, code, caseCode, message);
+    }
+
     public ResponseCode generalError() {
         return new ResponseCode(500, code, "00", "General Error");
     }
