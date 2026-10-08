@@ -29,6 +29,9 @@
 		<!-- CVE pin over the Spring Boot 4.1.1 BOM (manages 11.0.24): tomcat-embed-core
 		     < 11.0.25 FORM/DIGEST auth bypass. Drop when the BOM catches up. -->
 		<tomcat.version>11.0.26</tomcat.version>
+		<!-- Image tests (@Tag("image")) run only in the image-test profile, against a built image. -->
+		<surefire.groups></surefire.groups>
+		<surefire.excludedGroups>image</surefire.excludedGroups>
 		<jacoco.minimum.line>0.70</jacoco.minimum.line>
 		<jacoco.minimum.branch>0.70</jacoco.minimum.branch>
 	</properties>
@@ -129,6 +132,18 @@
 		</dependency>
 	</dependencies>
 
+	<profiles>
+		<!-- ./mvnw -P image-test test -Dimage.name=<image>: tests the built Docker image only. -->
+		<profile>
+			<id>image-test</id>
+			<properties>
+				<surefire.groups>image</surefire.groups>
+				<surefire.excludedGroups></surefire.excludedGroups>
+				<jacoco.skip>true</jacoco.skip>
+			</properties>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -147,9 +162,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<!-- Image tests run in their own CI step against the built image
-					     (-Dgroups=image -DexcludedGroups=none). -->
-					<excludedGroups>image</excludedGroups>
+					<groups>${surefire.groups}</groups>
+					<excludedGroups>${surefire.excludedGroups}</excludedGroups>
 					<redirectTestOutputToFile>true</redirectTestOutputToFile>
 					<argLine>@{argLine}</argLine>
 				</configuration>

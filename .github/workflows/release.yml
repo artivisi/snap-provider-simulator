@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ['*-RELEASE']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Release notes present
+        run: test -f "docs/releases/${GITHUB_REF_NAME}.md" || { echo "docs/releases/${GITHUB_REF_NAME}.md missing"; exit 1; }
+      - name: Build jar and SBOM
+        run: ./mvnw -B -DskipTests package
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file "docs/releases/${GITHUB_REF_NAME}.md" \
+            target/snap-provider-simulator-*.jar target/sbom.json

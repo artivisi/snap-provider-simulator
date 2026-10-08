@@ -6,3 +6,4 @@ target/
 docs/sources/
 docs/bri/
 tools/spec/node_modules/
+/keys/

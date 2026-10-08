@@ -1,0 +1,44 @@
+# Simulator + PostgreSQL. Put the bank private key at ./keys/bank-private.pem first:
+#   mkdir -p keys && openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/bank-private.pem
+#   chmod 644 keys/bank-private.pem    (the container runs as a non-root user)
+# Then: docker compose up -d   and open http://localhost:9090/portal
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: simulator
+      POSTGRES_USER: simulator
+      POSTGRES_PASSWORD: simulator
+    volumes:
+      - simulator-db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U simulator -d simulator"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  simulator:
+    image: artivisi/snap-provider-simulator:2026.10
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9090:9090"
+    environment:
+      SIMULATOR_DB_URL: jdbc:postgresql://postgres:5432/simulator
+      SIMULATOR_DB_USERNAME: simulator
+      SIMULATOR_DB_PASSWORD: simulator
+      SIMULATOR_TIMESTAMP_SKEW: 5m
+      SIMULATOR_BANK_PRIVATE_KEY_PATH: /keys/bank-private.pem
+      SIMULATOR_OPERATOR_USERNAME: operator
+      SIMULATOR_OPERATOR_PASSWORD: change-me
+      SIMULATOR_OUTBOUND_CONNECT_TIMEOUT: 5s
+      SIMULATOR_OUTBOUND_READ_TIMEOUT: 15s
+    volumes:
+      - ./keys:/keys:ro
+    # Lets the simulator reach a partner app running on the host as host.docker.internal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  simulator-db:

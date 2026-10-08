@@ -101,8 +101,9 @@ field encryption, security audit log, remember-me, CSP nonces, HSTS, DAST.
   surefire report and JaCoCo summary; CodeQL (`security-extended`).
 - `docker-publish.yml`: on `main`, `*-RELEASE` tags, weekly rebuild and manual
   dispatch. Build, run image tests, then buildx `linux/amd64,linux/arm64` push to
-  Docker Hub `artivisi/snap-provider-simulator` and GHCR, with SBOM and
-  provenance attestation. Tags via `docker/metadata-action` as Balaka
+  GHCR and, once the `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` secrets exist,
+  Docker Hub `artivisi/snap-provider-simulator`, with SBOM and provenance
+  attestation. Image tests: `./mvnw -P image-test test -Dimage.name=<image>`. Tags via `docker/metadata-action` as Balaka
   (`2026.10`, `latest` on release, `main`, `main-<sha>`).
 - `release.yml`: on `*-RELEASE`, GitHub Release with the jar, CycloneDX SBOM
   and `docs/releases/<TAG>.md` as the body.

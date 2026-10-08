@@ -1,0 +1,12 @@
+# The build reads pom.xml, lombok.config, src/ and .git (git-commit-id plugin).
+target/
+docs/
+tools/
+/keys/
+.github/
+.idea/
+.vscode/
+.claude/
+*.iml
+.DS_Store
+CLAUDE.local.md

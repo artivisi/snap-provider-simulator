@@ -1,5 +1,6 @@
 package com.artivisi.snapsimulator;
 
+import com.artivisi.snapsimulator.config.RequiredEnvironment;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -9,6 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 public class SnapSimulatorApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SnapSimulatorApplication.class, args);
+        SpringApplication application = new SpringApplication(SnapSimulatorApplication.class);
+        application.addListeners(new RequiredEnvironment());
+        application.run(args);
     }
 }
