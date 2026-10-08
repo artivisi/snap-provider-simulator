@@ -39,8 +39,8 @@ curl -O https://raw.githubusercontent.com/artivisi/snap-provider-simulator/main/
 docker compose up -d
 ```
 
-Open http://localhost:9090/portal. Images: `artivisi/snap-provider-simulator:2026.10`
-(Docker Hub) and `ghcr.io/artivisi/snap-provider-simulator:2026.10`, linux/amd64 and linux/arm64.
+Open http://localhost:9090/portal. Image: `ghcr.io/artivisi/snap-provider-simulator:2026.10`,
+linux/amd64 and linux/arm64.
 
 ### Configuration
 

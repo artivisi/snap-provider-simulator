@@ -90,7 +90,7 @@ standard; generic SNAP signature code. NOT allowed:
   timeouts, skew):
   fail at startup with a clear message. Partner settings are required at
   registration; none are defaulted.
-- Docker image built and pushed from this repo (Docker Hub, multi-arch).
+- Docker image built and pushed from this repo (GHCR; Docker Hub once its secrets exist), multi-arch.
 - Commit messages end with the Co-Authored-By line given by the harness.
 
 ## Spec traceability

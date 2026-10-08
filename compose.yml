@@ -18,7 +18,7 @@ services:
       retries: 20
 
   simulator:
-    image: artivisi/snap-provider-simulator:2026.10
+    image: ghcr.io/artivisi/snap-provider-simulator:2026.10
     depends_on:
       postgres:
         condition: service_healthy

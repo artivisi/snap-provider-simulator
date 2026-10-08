@@ -3,6 +3,9 @@
 spring:
   application:
     name: snap-provider-simulator
+  autoconfigure:
+    # Portal and admin chains bring their own users; Boot's generated default user is not used.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   datasource:
     url: ${SIMULATOR_DB_URL}
     username: ${SIMULATOR_DB_USERNAME}
