@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Settings · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Settings</h1>
+    <form th:action="@{/portal/settings}" th:object="${form}" method="post" class="stack" id="settings-form">
+        <label>Access token lifetime, seconds (10–86400)
+            <input type="number" th:field="*{tokenTtlSeconds}" required min="10" max="86400">
+            <span class="field-error" th:if="${#fields.hasErrors('tokenTtlSeconds')}" th:errors="*{tokenTtlSeconds}"></span>
+        </label>
+        <fieldset>
+            <legend>Diagnostic mode</legend>
+            <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="true" required> On</label>
+            <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="false"> Off</label>
+        </fieldset>
+        <button type="submit" id="settings-submit">Save</button>
+    </form>
+</main>
+</body>
+</html>

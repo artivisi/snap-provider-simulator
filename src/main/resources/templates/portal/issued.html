@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Credentials · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Credentials issued</h1>
+    <p class="alert warn">Copy the client secret now. It is not shown again; you can only regenerate it,
+        which invalidates the current one.</p>
+    <dl class="pairs">
+        <dt>partnerServiceId (VA prefix, 8 characters, space-padded)</dt>
+        <dd><code id="issued-partner-service-id" th:text="|&quot;${issued.partnerServiceId}&quot;|"></code></dd>
+        <dt>Client id (X-CLIENT-KEY)</dt>
+        <dd><code id="issued-client-id" th:text="${issued.clientId}"></code></dd>
+        <dt>Client secret (HMAC key)</dt>
+        <dd><code id="issued-client-secret" th:text="${issued.clientSecret}"></code></dd>
+    </dl>
+    <p><a th:href="@{/portal}" id="continue-link">Continue to the portal</a></p>
+</main>
+</body>
+</html>

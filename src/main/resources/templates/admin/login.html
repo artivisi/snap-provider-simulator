@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Operator log in · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Operator log in</h1>
+    <p class="alert error" th:if="${param.error}" id="login-error">Wrong username or password.</p>
+    <form th:action="@{/admin/login}" method="post" class="stack">
+        <label>Username <input type="text" name="username" id="username" required autofocus></label>
+        <label>Password <input type="password" name="password" id="password" required></label>
+        <button type="submit" id="login-submit">Log in</button>
+    </form>
+</main>
+</body>
+</html>

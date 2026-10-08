@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Endpoint · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Partner endpoint</h1>
+    <p>For bank-to-partner calls: the simulator requests a token from
+        <code>{base URL}/v1.0/access-token/b2b</code>, then calls
+        <code>{base URL}/v1.0/transfer-va/inquiry</code> and <code>/payment</code>. Client id and secret are the
+        ones your app issued to the bank.</p>
+    <p class="alert" th:if="${message}" th:text="${message}" id="flash-message"></p>
+    <form th:action="@{/portal/endpoint}" th:object="${form}" method="post" class="stack" id="endpoint-form">
+        <label>Base URL
+            <input type="url" th:field="*{baseUrl}" required placeholder="http://host.docker.internal:8080/snap">
+            <span class="field-error" th:if="${#fields.hasErrors('baseUrl')}" th:errors="*{baseUrl}"></span>
+        </label>
+        <label>Client id issued to the bank
+            <input type="text" th:field="*{clientId}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('clientId')}" th:errors="*{clientId}"></span>
+        </label>
+        <label>Client secret issued to the bank
+            <input type="password" th:field="*{clientSecret}" required autocomplete="off">
+            <span class="field-error" th:if="${#fields.hasErrors('clientSecret')}" th:errors="*{clientSecret}"></span>
+        </label>
+        <button type="submit" id="endpoint-submit">Save</button>
+    </form>
+</main>
+</body>
+</html>

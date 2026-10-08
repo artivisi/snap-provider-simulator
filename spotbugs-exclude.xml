@@ -4,4 +4,30 @@ SpotBugs exclusions. Each Match carries a comment stating why the finding is
 not a defect in this application. Add one only after the code is right.
 -->
 <FindBugsFilter>
+
+    <!--
+    EI_EXPOSE_REP2 on constructor injection: Spring creates these beans once and
+    passes in other singletons (repositories, JdbcTemplate, JsonMapper). Copying
+    them is not possible and would break proxies. Limited to the bean packages and
+    to the constructor-storage pattern; records and DTOs still copy their collections.
+    -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Or>
+            <Class name="~com\.artivisi\.snapsimulator\.service\.[A-Za-z]+"/>
+            <Class name="~com\.artivisi\.snapsimulator\.controller(\.api|\.snap)?\.[A-Za-z]+Controller"/>
+            <Class name="com.artivisi.snapsimulator.controller.snap.SnapInboundFilter"/>
+        </Or>
+    </Match>
+
+    <!--
+    SPRING_CSRF_PROTECTION_DISABLED on the SNAP chain (/snap/**, /keys/**, health):
+    those endpoints use no session and no cookies; SNAP calls authenticate with a
+    bearer token and a per-request signature, so there is no ambient credential a
+    cross-site request could ride on. The portal and admin chains keep CSRF on.
+    -->
+    <Match>
+        <Class name="com.artivisi.snapsimulator.security.SecurityConfig"/>
+        <Bug pattern="SPRING_CSRF_PROTECTION_DISABLED"/>
+    </Match>
 </FindBugsFilter>

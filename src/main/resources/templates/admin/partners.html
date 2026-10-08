@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Partners · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>Partners</h1>
+    <p class="alert" th:if="${message}" th:text="${message}" id="flash-message"></p>
+    <p th:if="${rows.isEmpty()}" id="no-partners">No partners registered.</p>
+    <table class="table" id="partners" th:unless="${rows.isEmpty()}">
+        <thead>
+        <tr><th>Email</th><th>partnerServiceId</th><th>Client id</th><th>Checklist</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${rows}" th:attr="data-testid=|partner-${row.view.email}|">
+            <td th:text="${row.view.email}"></td>
+            <td><code th:text="|&quot;${row.view.partnerServiceId}&quot;|"></code></td>
+            <td><code th:text="${row.view.clientId}"></code></td>
+            <td th:text="|${row.stepsDone} / ${row.view.checklist.size()}|" class="checklist-progress"></td>
+            <td><span class="badge status" th:classappend="${row.enabled} ? 'done' : 'error'"
+                      th:text="${row.enabled} ? 'Enabled' : 'Disabled'"></span></td>
+            <td>
+                <form th:if="${row.enabled}" th:action="@{/admin/partners/{id}/disable(id=${row.id})}" method="post" class="inline">
+                    <button type="submit" class="secondary action-disable">Disable</button>
+                </form>
+                <form th:unless="${row.enabled}" th:action="@{/admin/partners/{id}/enable(id=${row.id})}" method="post" class="inline">
+                    <button type="submit" class="secondary action-enable">Enable</button>
+                </form>
+                <form th:action="@{/admin/partners/{id}/reset(id=${row.id})}" method="post" class="inline"
+                      onsubmit="return confirm('Delete all VAs, payments, tokens and logs of this partner?')">
+                    <button type="submit" class="secondary action-reset">Reset data</button>
+                </form>
+                <form th:action="@{/admin/partners/{id}/delete(id=${row.id})}" method="post" class="inline"
+                      onsubmit="return confirm('Delete this partner and all its data?')">
+                    <button type="submit" class="danger action-delete">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

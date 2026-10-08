@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Sign up · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Register a partner app</h1>
+    <p>One account is one partner app. After sign-up the simulator issues a VA prefix
+        (<code>partnerServiceId</code>), a client id and a client secret.</p>
+    <form th:action="@{/portal/signup}" th:object="${form}" method="post" class="stack" id="signup-form">
+        <label>Email
+            <input type="email" th:field="*{email}" required>
+            <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}" id="email-error"></span>
+        </label>
+        <label>Password (8–72 characters)
+            <input type="password" th:field="*{password}" required minlength="8" maxlength="72">
+            <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+        </label>
+        <label>Access token lifetime, seconds (10–86400)
+            <input type="number" th:field="*{tokenTtlSeconds}" required min="10" max="86400">
+            <span class="field-error" th:if="${#fields.hasErrors('tokenTtlSeconds')}" th:errors="*{tokenTtlSeconds}"></span>
+        </label>
+        <fieldset>
+            <legend>Diagnostic mode</legend>
+            <p class="hint">When on, a failed signature check returns the string-to-sign and body hashes the
+                simulator expected. Real banks never do this.</p>
+            <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="true" required> On</label>
+            <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="false"> Off</label>
+            <span class="field-error" th:if="${#fields.hasErrors('diagnosticMode')}" th:errors="*{diagnosticMode}"></span>
+        </fieldset>
+        <button type="submit" id="signup-submit">Sign up</button>
+    </form>
+    <p>Already registered? <a th:href="@{/portal/login}">Log in</a>.</p>
+</main>
+</body>
+</html>

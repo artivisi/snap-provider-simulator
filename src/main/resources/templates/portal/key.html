@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Key · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>SNAP key pair</h1>
+    <p>The B2B token request is signed with your private key (SHA256withRSA over
+        <code>X-CLIENT-KEY|X-TIMESTAMP</code>). The simulator verifies it with the public key registered here.
+        Registering a key replaces the current one.</p>
+    <p class="alert" th:if="${message}" th:text="${message}" id="flash-message"></p>
+    <p class="alert error" th:if="${keyError}" th:text="${keyError}" id="key-error"></p>
+
+    <section>
+        <h2>Registered public key</h2>
+        <pre id="registered-key" th:if="${publicKeyPem != null}" th:text="${publicKeyPem}"></pre>
+        <p id="no-key" th:if="${publicKeyPem == null}">No key registered.</p>
+    </section>
+
+    <section>
+        <h2>Option 1: generate in the simulator</h2>
+        <p>Creates an RSA-2048 pair, registers the public key and downloads the private key as
+            <code>private.pem</code> (PKCS#8). The private key is not stored: if the download is lost, generate again.</p>
+        <form th:action="@{/portal/key/generate}" method="post">
+            <button type="submit" id="generate-key">Generate key pair and download private key</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Option 2: generate locally and upload the public key</h2>
+        <pre id="openssl-commands">openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private.pem
+openssl pkey -in private.pem -pubout -out public.pem</pre>
+        <p class="hint"><code>genpkey</code> writes PKCS#8 (<code>BEGIN PRIVATE KEY</code>), which Java's
+            <code>PKCS8EncodedKeySpec</code> reads directly. <code>openssl genrsa</code> on OpenSSL 1.1 writes PKCS#1
+            (<code>BEGIN RSA PRIVATE KEY</code>); convert it with
+            <code>openssl pkcs8 -topk8 -nocrypt -in old.pem -out private.pem</code>.</p>
+        <form th:action="@{/portal/key}" method="post" enctype="multipart/form-data" class="stack" id="upload-form">
+            <label>Public key PEM
+                <textarea name="publicKeyPem" id="public-key-pem" rows="8"
+                          placeholder="-----BEGIN PUBLIC KEY-----"></textarea>
+            </label>
+            <label>or file <input type="file" name="publicKeyFile" id="public-key-file" accept=".pem,.txt"></label>
+            <button type="submit" id="upload-key">Upload public key</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Bank public key</h2>
+        <p>Bank-to-partner token requests are signed with the simulator's bank key. Verify them with
+            <a th:href="@{/keys/bank-public.pem}" id="bank-key-link">bank-public.pem</a>.</p>
+    </section>
+</main>
+</body>
+</html>

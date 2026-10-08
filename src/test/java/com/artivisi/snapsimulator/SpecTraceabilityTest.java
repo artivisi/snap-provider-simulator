@@ -31,16 +31,11 @@ class SpecTraceabilityTest {
      * that is already traced in main and test fails the build so the list only shrinks.
      */
     private static final Set<String> PENDING = Set.of(
-            "snap.headers.token", "snap.headers.service", "snap.external-id",
-            "bri.va.number-layout", "bri.oauth.token-b2b", "aspi.oauth.token-b2b-outbound",
-            "aspi.va.create-va", "aspi.va.update-va", "aspi.va.inquiry-va", "aspi.va.delete-va",
-            "aspi.va.inquiry-status", "bri.briva-online.inquiry", "bri.briva-online.payment",
-            "bri.channel-id", "bri.payment-flag-status", "aspi.va.trx-type", "sim.statement-csv",
-            "sim.portal.signup", "sim.portal.credentials", "sim.portal.key-generate", "sim.portal.key-upload",
-            "sim.portal.endpoint", "sim.portal.settings", "sim.portal.checklist", "sim.portal.reset",
-            "sim.admin.partners", "sim.diagnostic-mode", "sim.biller-payment.trigger",
-            "sim.biller-payment.resend", "sim.va.pay", "sim.error-injection", "sim.exchange-log",
-            "sim.reconciliation-seeder");
+            "bri.va.number-layout", "aspi.oauth.token-b2b-outbound", "aspi.va.create-va", "aspi.va.update-va",
+            "aspi.va.inquiry-va", "aspi.va.delete-va", "aspi.va.inquiry-status", "bri.briva-online.inquiry",
+            "bri.briva-online.payment", "bri.channel-id", "bri.payment-flag-status", "aspi.va.trx-type",
+            "sim.statement-csv", "sim.biller-payment.trigger", "sim.biller-payment.resend", "sim.va.pay",
+            "sim.error-injection", "sim.reconciliation-seeder");
 
     private static final Map<String, JsonNode> ITEMS = new HashMap<>();
     private static final List<Ref> MAIN = new ArrayList<>();

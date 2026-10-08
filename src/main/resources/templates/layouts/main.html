@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content)">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">SNAP Provider Simulator</title>
+    <meta name="csrf-token" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="csrf-header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/htmx.min.js}" defer></script>
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+<header class="topbar">
+    <a class="brand" th:href="@{/portal}">SNAP Provider Simulator</a>
+    <nav sec:authorize="hasRole('PARTNER')" id="portal-nav">
+        <a th:href="@{/portal}" id="nav-overview">Overview</a>
+        <a th:href="@{/portal/key}" id="nav-key">Key</a>
+        <a th:href="@{/portal/endpoint}" id="nav-endpoint">Endpoint</a>
+        <a th:href="@{/portal/settings}" id="nav-settings">Settings</a>
+        <form th:action="@{/portal/logout}" method="post" class="inline">
+            <button type="submit" class="link" id="nav-logout">Log out</button>
+        </form>
+    </nav>
+    <nav sec:authorize="hasRole('OPERATOR')" id="admin-nav">
+        <a th:href="@{/admin}" id="nav-partners">Partners</a>
+        <form th:action="@{/admin/logout}" method="post" class="inline">
+            <button type="submit" class="link" id="nav-admin-logout">Log out</button>
+        </form>
+    </nav>
+</header>
+<main th:replace="${content}"></main>
+<footer class="footer">
+    Simulates BRI's publicly documented SNAP VA behaviour; not affiliated with or endorsed by
+    PT Bank Rakyat Indonesia. For development and testing only.
+</footer>
+</body>
+</html>

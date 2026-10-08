@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Log in · SNAP Provider Simulator</title></head>
+<body>
+<main class="narrow">
+    <h1>Partner log in</h1>
+    <p class="alert error" th:if="${param.error}" id="login-error">Wrong email or password, or the account is disabled.</p>
+    <p class="alert" th:if="${param.logout}" id="logout-message">Logged out.</p>
+    <form th:action="@{/portal/login}" method="post" class="stack">
+        <label>Email <input type="email" name="username" id="email" required autofocus></label>
+        <label>Password <input type="password" name="password" id="password" required></label>
+        <button type="submit" id="login-submit">Log in</button>
+    </form>
+    <p>No account yet? <a th:href="@{/portal/signup}" id="signup-link">Sign up</a>.</p>
+</main>
+</body>
+</html>
