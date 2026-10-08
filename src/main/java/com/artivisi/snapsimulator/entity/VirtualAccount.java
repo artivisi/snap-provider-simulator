@@ -23,8 +23,8 @@ import java.time.Instant;
 public class VirtualAccount extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id")
-    private Partner partner;
+    @JoinColumn(name = "connection_id")
+    private BankConnection connection;
 
     private String customerNo;
     private String virtualAccountNo;

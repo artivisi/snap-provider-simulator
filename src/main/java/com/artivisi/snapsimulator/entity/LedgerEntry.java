@@ -32,8 +32,8 @@ public class LedgerEntry {
     private Instant createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id")
-    private Partner partner;
+    @JoinColumn(name = "connection_id")
+    private BankConnection connection;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")

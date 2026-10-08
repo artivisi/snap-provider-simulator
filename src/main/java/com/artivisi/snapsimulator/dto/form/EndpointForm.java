@@ -1,7 +1,7 @@
 package com.artivisi.snapsimulator.dto.form;
 
 import com.artivisi.snapsimulator.dto.EndpointRequest;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -26,7 +26,7 @@ public class EndpointForm {
     private String clientSecret;
 
     /** The stored secret is not shown again; the partner re-enters it on change. */
-    public static EndpointForm of(Partner p) {
+    public static EndpointForm of(BankConnection p) {
         EndpointForm form = new EndpointForm();
         form.setBaseUrl(p.getEndpointBaseUrl());
         form.setClientId(p.getEndpointClientId());

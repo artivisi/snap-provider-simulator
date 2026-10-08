@@ -13,7 +13,7 @@ import java.util.List;
  */
 public record SeedRequest(
         @NotNull @Size(min = 5, max = 5) List<@NotBlank String> virtualAccountNos,
-        @NotBlank @Pattern(regexp = "\\d{5}", message = "5 digits from the channel list") String channelId) {
+        @NotBlank @Pattern(regexp = "\\d{4,5}", message = "a code from the bank's channel list") String channelId) {
 
     public SeedRequest {
         virtualAccountNos = virtualAccountNos == null ? null : List.copyOf(virtualAccountNos);

@@ -1,7 +1,7 @@
 package com.artivisi.snapsimulator.service;
 
 import com.artivisi.snapsimulator.SpecRef;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.entity.Payment;
 import com.artivisi.snapsimulator.entity.VirtualAccount;
 import com.artivisi.snapsimulator.enums.ChecklistItem;
@@ -47,8 +47,8 @@ public class VirtualAccountService {
         this.json = json;
     }
 
-    public List<VirtualAccount> list(UUID partnerId) {
-        return accounts.findByPartnerIdOrderByCreatedAtDesc(partnerId);
+    public List<VirtualAccount> list(UUID connectionId) {
+        return accounts.findByConnectionIdOrderByCreatedAtDesc(connectionId);
     }
 
     /** partnerServiceId, customerNo and virtualAccountNo, checked against each other and the partner (A17, A18). */
@@ -57,7 +57,7 @@ public class VirtualAccountService {
     }
 
     @SpecRef("bri.va.number-layout")
-    VaNumber vaNumber(SnapRequest request, Partner partner) {
+    VaNumber vaNumber(SnapRequest request, BankConnection partner) {
         String partnerServiceId = request.text("partnerServiceId", true, PARTNER_SERVICE_ID);
         String customerNo = request.text("customerNo", true, CUSTOMER_NO);
         String virtualAccountNo = request.text("virtualAccountNo", true, 28);
@@ -80,8 +80,8 @@ public class VirtualAccountService {
     @SpecRef("aspi.va.create-va#request.totalAmount")
     @SpecRef("aspi.va.create-va#request.expiredDate")
     @SpecRef("aspi.va.trx-type")
-    public ObjectNode create(Partner partner, JsonNode body, Instant now) {
-        SnapRequest request = SnapRequest.of(body, SnapService.CREATE_VA);
+    public ObjectNode create(BankConnection partner, JsonNode body, Instant now) {
+        SnapRequest request = SnapRequest.of(body, SnapService.BRI_CREATE_VA);
         VaNumber number = vaNumber(request, partner);
         String name = request.text("virtualAccountName", true, 255);
         String trxId = request.text("trxId", true, 64);
@@ -97,14 +97,14 @@ public class VirtualAccountService {
         if (expiredDate != null && !expiredDate.isAfter(now)) {
             throw new SnapException(request.service().invalidFieldFormat("expiredDate"));
         }
-        if (accounts.existsByPartnerIdAndTrxId(partner.getId(), trxId)
-                || accounts.existsByPartnerIdAndVirtualAccountNoAndStatus(partner.getId(), number.virtualAccountNo(),
+        if (accounts.existsByConnectionIdAndTrxId(partner.getId(), trxId)
+                || accounts.existsByConnectionIdAndVirtualAccountNoAndStatus(partner.getId(), number.virtualAccountNo(),
                         VaStatus.ACTIVE)) {
             throw new SnapException(request.service().conflict("01", "Duplicate partnerReferenceNo"));
         }
 
         VirtualAccount va = new VirtualAccount();
-        va.setPartner(partner);
+        va.setConnection(partner);
         va.setCustomerNo(number.customerNo());
         va.setVirtualAccountNo(number.virtualAccountNo());
         va.setVirtualAccountName(name);
@@ -124,8 +124,8 @@ public class VirtualAccountService {
     @Transactional
     @SpecRef("aspi.va.update-va")
     @SpecRef("aspi.va.update-va#request.trxId")
-    public ObjectNode update(Partner partner, JsonNode body, Instant now) {
-        SnapRequest request = SnapRequest.of(body, SnapService.UPDATE_VA);
+    public ObjectNode update(BankConnection partner, JsonNode body, Instant now) {
+        SnapRequest request = SnapRequest.of(body, SnapService.BRI_UPDATE_VA);
         VaNumber number = vaNumber(request, partner);
         String trxId = request.text("trxId", true, 64);
         String name = request.text("virtualAccountName", true, 255);
@@ -157,8 +157,8 @@ public class VirtualAccountService {
 
     @SpecRef("aspi.va.inquiry-va")
     @SpecRef("aspi.va.inquiry-va#request.trxId")
-    public ObjectNode inquiry(Partner partner, JsonNode body, Instant now) {
-        SnapRequest request = SnapRequest.of(body, SnapService.INQUIRY_VA);
+    public ObjectNode inquiry(BankConnection partner, JsonNode body, Instant now) {
+        SnapRequest request = SnapRequest.of(body, SnapService.BRI_INQUIRY_VA);
         VaNumber number = vaNumber(request, partner);
         String trxId = request.text("trxId", true, 64);
         VirtualAccount va = find(request, partner, number, trxId);
@@ -168,8 +168,8 @@ public class VirtualAccountService {
 
     @Transactional
     @SpecRef("aspi.va.delete-va")
-    public ObjectNode delete(Partner partner, JsonNode body) {
-        SnapRequest request = SnapRequest.of(body, SnapService.DELETE_VA);
+    public ObjectNode delete(BankConnection partner, JsonNode body) {
+        SnapRequest request = SnapRequest.of(body, SnapService.BRI_DELETE_VA);
         VaNumber number = vaNumber(request, partner);
         String trxId = request.text("trxId", false, 64);
         VirtualAccount va = find(request, partner, number, trxId);
@@ -190,16 +190,16 @@ public class VirtualAccountService {
     /** Matches by virtualAccountNo, then paymentRequestId when given; paid answers flag 00 (A24). */
     @SpecRef("aspi.va.inquiry-status")
     @SpecRef("bri.payment-flag-status")
-    public ObjectNode status(Partner partner, JsonNode body) {
-        SnapRequest request = SnapRequest.of(body, SnapService.INQUIRY_STATUS);
+    public ObjectNode status(BankConnection partner, JsonNode body) {
+        SnapRequest request = SnapRequest.of(body, SnapService.BRI_INQUIRY_STATUS);
         VaNumber number = vaNumber(request, partner);
         String inquiryRequestId = request.text("inquiryRequestId", false, 128);
         String paymentRequestId = request.text("paymentRequestId", false, 128);
-        boolean vaKnown = accounts.findFirstByPartnerIdAndVirtualAccountNoOrderByCreatedAtDesc(partner.getId(),
+        boolean vaKnown = accounts.findFirstByConnectionIdAndVirtualAccountNoOrderByCreatedAtDesc(partner.getId(),
                 number.virtualAccountNo()).isPresent();
         Payment payment = (paymentRequestId == null
-                ? payments.findFirstByPartnerIdAndVirtualAccountNoOrderByPaidAtDesc(partner.getId(), number.virtualAccountNo())
-                : payments.findByPartnerIdAndVirtualAccountNoAndPaymentRequestId(partner.getId(),
+                ? payments.findFirstByConnectionIdAndVirtualAccountNoOrderByPaidAtDesc(partner.getId(), number.virtualAccountNo())
+                : payments.findByConnectionIdAndVirtualAccountNoAndPaymentRequestId(partner.getId(),
                         number.virtualAccountNo(), paymentRequestId))
                 .orElse(null);
         if (payment == null) {
@@ -224,8 +224,8 @@ public class VirtualAccountService {
         return success(request.service(), data);
     }
 
-    private VirtualAccount find(SnapRequest request, Partner partner, VaNumber number, String trxId) {
-        VirtualAccount va = accounts.findFirstByPartnerIdAndVirtualAccountNoOrderByCreatedAtDesc(partner.getId(),
+    private VirtualAccount find(SnapRequest request, BankConnection partner, VaNumber number, String trxId) {
+        VirtualAccount va = accounts.findFirstByConnectionIdAndVirtualAccountNoOrderByCreatedAtDesc(partner.getId(),
                 number.virtualAccountNo())
                 .orElseThrow(() -> new SnapException(request.service().notFound("12", "Invalid Bill/Virtual Account Not Found")));
         if (trxId != null && !trxId.equals(va.getTrxId())) {
@@ -257,7 +257,7 @@ public class VirtualAccountService {
         return json.writeValueAsString(extra);
     }
 
-    ObjectNode vaData(VirtualAccount va, Partner partner, boolean withDates) {
+    ObjectNode vaData(VirtualAccount va, BankConnection partner, boolean withDates) {
         ObjectNode data = json.createObjectNode();
         data.put("partnerServiceId", partner.getPartnerServiceId());
         data.put("customerNo", va.getCustomerNo());

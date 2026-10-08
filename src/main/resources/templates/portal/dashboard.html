@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
-<head><title>Overview · SNAP Provider Simulator</title></head>
+<head><title>Connection · SNAP Provider Simulator</title></head>
 <body>
 <main>
-    <h1>Partner overview</h1>
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
+    <h1 th:text="|${conn.bank} connection|">Connection</h1>
     <p class="alert" th:if="${message}" th:text="${message}" id="flash-message"></p>
 
     <section>
@@ -11,7 +12,7 @@
         <table class="table" id="checklist">
             <thead><tr><th>Step</th><th>Status</th><th>Completed</th></tr></thead>
             <tbody>
-            <tr th:each="step : ${partner.checklist}" th:id="|checklist-${step.item}|"
+            <tr th:each="step : ${conn.checklist}" th:id="|checklist-${step.item}|"
                 th:attr="data-testid=|checklist-${step.item}|,data-done=${step.completedAt != null}">
                 <td th:text="${step.label}"></td>
                 <td><span th:class="${step.completedAt != null} ? 'badge done' : 'badge'"
@@ -25,12 +26,14 @@
     <section>
         <h2>Credentials</h2>
         <dl class="pairs">
-            <dt>Email</dt><dd id="partner-email" th:text="${partner.email}"></dd>
-            <dt>partnerServiceId</dt><dd><code id="partner-service-id" th:text="|&quot;${partner.partnerServiceId}&quot;|"></code></dd>
-            <dt>Client id</dt><dd><code id="client-id" th:text="${partner.clientId}"></code></dd>
+            <dt>Bank</dt><dd id="bank" th:text="${conn.bank}"></dd>
+            <dt>partnerServiceId</dt><dd><code id="partner-service-id" th:text="|&quot;${conn.partnerServiceId}&quot;|"></code></dd>
+            <dt th:if="${conn.bank.name() == 'BCA'}">Company code (X-PARTNER-ID)</dt>
+            <dd th:if="${conn.bank.name() == 'BCA'}"><code id="company-code" th:text="${conn.partnerServiceId.trim()}"></code></dd>
+            <dt>Client id</dt><dd><code id="client-id" th:text="${conn.clientId}"></code></dd>
             <dt>Client secret</dt><dd>shown once at issue time</dd>
         </dl>
-        <form th:action="@{/portal/credentials/secret}" method="post">
+        <form th:action="@{/portal/c/{id}/credentials/secret(id=${conn.id})}" method="post">
             <button type="submit" class="secondary" id="regenerate-secret">Regenerate client secret</button>
         </form>
     </section>
@@ -38,35 +41,35 @@
     <section>
         <h2>Settings</h2>
         <dl class="pairs">
-            <dt>Access token lifetime</dt><dd id="token-ttl" th:text="|${partner.tokenTtlSeconds} s|"></dd>
-            <dt>Diagnostic mode</dt><dd id="diagnostic-mode" th:text="${partner.diagnosticMode} ? 'On' : 'Off'"></dd>
+            <dt>Access token lifetime</dt><dd id="token-ttl" th:text="|${conn.tokenTtlSeconds} s|"></dd>
+            <dt>Diagnostic mode</dt><dd id="diagnostic-mode" th:text="${conn.diagnosticMode} ? 'On' : 'Off'"></dd>
             <dt>Partner endpoint</dt>
-            <dd id="endpoint-base-url" th:text="${partner.endpointBaseUrl != null} ? ${partner.endpointBaseUrl} : 'not registered'"></dd>
+            <dd id="endpoint-base-url" th:text="${conn.endpointBaseUrl != null} ? ${conn.endpointBaseUrl} : 'not registered'"></dd>
         </dl>
     </section>
 
     <section>
-        <h2>Reset</h2>
-        <p>Deletes your VAs, payments, tokens, exchange log and injection rules, and clears the checklist except
-            the key step. Account, credentials, key, endpoint and settings stay.</p>
-        <form th:action="@{/portal/reset}" method="post" onsubmit="return confirm('Reset all simulation data?')">
-            <button type="submit" class="danger" id="reset-data">Reset simulation data</button>
-        </form>
+        <h2>SNAP endpoints you call</h2>
+        <table class="table" id="snap-endpoints">
+            <thead><tr><th>Method</th><th>Path</th><th>Service</th></tr></thead>
+            <tbody>
+            <tr th:each="s : ${services}">
+                <td th:text="${s.method()}"></td><td><code th:text="${s.path()}"></code></td><td th:text="${s.code()}"></td>
+            </tr>
+            </tbody>
+        </table>
+        <p>The bank's public key: <a th:href="@{/keys/{b}-public.pem(b=${conn.bank.slug()})}" id="bank-key-link"
+                                     th:text="|${conn.bank.slug()}-public.pem|"></a></p>
     </section>
 
     <section>
-        <h2>SNAP endpoints</h2>
-        <table class="table">
-            <thead><tr><th>Method</th><th>Path</th><th>Service</th></tr></thead>
-            <tbody>
-            <tr><td>POST</td><td><code>/snap/v1.0/access-token/b2b</code></td><td>73</td></tr>
-            <tr><td>POST</td><td><code>/snap/v1.0/transfer-va/create-va</code></td><td>27</td></tr>
-            <tr><td>PUT</td><td><code>/snap/v1.0/transfer-va/update-va</code></td><td>28</td></tr>
-            <tr><td>POST</td><td><code>/snap/v1.0/transfer-va/inquiry-va</code></td><td>30</td></tr>
-            <tr><td>DELETE</td><td><code>/snap/v1.0/transfer-va/delete-va</code></td><td>31</td></tr>
-            <tr><td>POST</td><td><code>/snap/v1.0/transfer-va/status</code></td><td>26</td></tr>
-            </tbody>
-        </table>
+        <h2>Reset</h2>
+        <p>Deletes this connection's VAs, payments, tokens, exchange log and injection rules, and clears the
+            checklist except the key step. Credentials, key, endpoint and settings stay.</p>
+        <form th:action="@{/portal/c/{id}/reset(id=${conn.id})}" method="post"
+              onsubmit="return confirm('Reset all simulation data of this connection?')">
+            <button type="submit" class="danger" id="reset-data">Reset simulation data</button>
+        </form>
     </section>
 </main>
 </body>

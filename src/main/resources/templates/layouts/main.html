@@ -15,14 +15,7 @@
 <header class="topbar">
     <a class="brand" th:href="@{/portal}">SNAP Provider Simulator</a>
     <nav sec:authorize="hasRole('PARTNER')" id="portal-nav">
-        <a th:href="@{/portal}" id="nav-overview">Overview</a>
-        <a th:href="@{/portal/key}" id="nav-key">Key</a>
-        <a th:href="@{/portal/endpoint}" id="nav-endpoint">Endpoint</a>
-        <a th:href="@{/portal/settings}" id="nav-settings">Settings</a>
-        <a th:href="@{/portal/vas}" id="nav-vas">VAs</a>
-        <a th:href="@{/portal/payments}" id="nav-payments">Payments</a>
-        <a th:href="@{/portal/exchanges}" id="nav-exchanges">Exchange log</a>
-        <a th:href="@{/portal/injections}" id="nav-injections">Error injection</a>
+        <a th:href="@{/portal}" id="nav-account">Bank connections</a>
         <form th:action="@{/portal/logout}" method="post" class="inline">
             <button type="submit" class="link" id="nav-logout">Log out</button>
         </form>
@@ -36,8 +29,8 @@
 </header>
 <main th:replace="${content}"></main>
 <footer class="footer">
-    Simulates BRI's publicly documented SNAP VA behaviour; not affiliated with or endorsed by
-    PT Bank Rakyat Indonesia. For development and testing only.
+    Simulates the publicly documented SNAP VA behaviour of BRI and BCA; not affiliated with or endorsed by
+    PT Bank Rakyat Indonesia or PT Bank Central Asia. For development and testing only.
 </footer>
 </body>
 </html>

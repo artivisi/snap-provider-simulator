@@ -26,13 +26,13 @@ public class StatementService {
         this.ledger = ledger;
     }
 
-    public String csv(UUID partnerId, LocalDate day) {
+    public String csv(UUID connectionId, LocalDate day) {
         Instant from = day.atStartOfDay(SnapTimestamp.JAKARTA).toInstant();
         Instant to = day.plusDays(1).atStartOfDay(SnapTimestamp.JAKARTA).toInstant();
         StringBuilder csv = new StringBuilder(HEADER).append('\n');
         for (LedgerEntry e : ledger
-                .findByPartnerIdAndTransactionTimeGreaterThanEqualAndTransactionTimeLessThanOrderByTransactionTime(
-                        partnerId, from, to)) {
+                .findByConnectionIdAndTransactionTimeGreaterThanEqualAndTransactionTimeLessThanOrderByTransactionTime(
+                        connectionId, from, to)) {
             csv.append(SnapTimestamp.formatSeconds(e.getTransactionTime())).append(',')
                     .append(e.getJournalId()).append(',')
                     .append(e.getEntryType()).append(',')

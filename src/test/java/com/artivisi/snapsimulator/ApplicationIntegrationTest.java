@@ -22,7 +22,7 @@ class ApplicationIntegrationTest {
     @DisplayName("Context starts and Flyway creates the schema")
     void schemaMigrated() {
         assertThat(jdbc.queryForList("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
-                String.class)).contains("partner", "access_token", "external_id", "virtual_account", "payment",
+                String.class)).contains("partner", "bank_connection", "access_token", "external_id", "virtual_account", "payment",
                 "ledger_entry", "exchange_log", "injection_rule");
     }
 }

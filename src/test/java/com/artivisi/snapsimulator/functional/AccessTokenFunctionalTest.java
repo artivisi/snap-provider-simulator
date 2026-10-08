@@ -1,10 +1,13 @@
 package com.artivisi.snapsimulator.functional;
 
 import com.artivisi.snapsimulator.SpecRef;
+import com.artivisi.snapsimulator.enums.Bank;
+import com.artivisi.snapsimulator.snap.PemKeys;
 import com.artivisi.snapsimulator.snap.SnapSignature;
 import com.artivisi.snapsimulator.snap.SnapTimestamp;
 import com.artivisi.snapsimulator.support.SnapTestClient;
 import com.microsoft.playwright.APIResponse;
+import com.microsoft.playwright.options.RequestOptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
@@ -134,18 +137,48 @@ class AccessTokenFunctionalTest extends PlaywrightTestBase {
     }
 
     @Test
-    @DisplayName("Partner without a registered key gets 4017300 with a hint")
+    @DisplayName("Connection without a registered key gets 4017300 with a hint")
     void noKey() {
-        APIResponse signup = api.post("/portal/api/signup", com.microsoft.playwright.options.RequestOptions.create()
-                .setHeader("Content-Type", "application/json")
-                .setData("{\"email\":\"nokey-" + System.nanoTime() + "@example.test\",\"password\":\"password-123\","
-                        + "\"tokenTtlSeconds\":60,\"diagnosticMode\":true}"));
-        String clientId = SnapTestClient.json(signup).get("clientId").asString();
-        SnapTestClient client = new SnapTestClient(api, clientId,
-                com.artivisi.snapsimulator.snap.PemKeys.generateRsa().getPrivate(), "unused");
+        TestPartner withKey = signupWithKey(true, 60);
+        APIResponse created = api.post("/portal/api/connections", json(withKey)
+                .setData("{\"bank\":\"BRI\",\"tokenTtlSeconds\":60,\"diagnosticMode\":true}"));
+        JsonNode issued = SnapTestClient.json(created);
+        SnapTestClient client = new SnapTestClient(api, Bank.BRI, issued.get("clientId").asString(),
+                issued.get("partnerServiceId").asString(), PemKeys.generateRsa().getPrivate(), "unused");
         JsonNode body = assertCode(client.token(client.tokenHeaders(SnapTestClient.now()), GRANT),
                 "4017300", "Unauthorized. No public key registered");
         assertThat(body.at("/additionalInfo/diagnostic/hint").asString()).contains("no public key registered");
+    }
+
+    @Test
+    @SpecRef("bca.oauth.token-b2b")
+    @SpecRef("bca.oauth.token-b2b#response.responseCode")
+    @SpecRef("bca.oauth.token-b2b#response.tokenType")
+    @SpecRef("bca.oauth.token-b2b#response.accessToken")
+    @SpecRef("bca.oauth.token-b2b#response.expiresIn")
+    @DisplayName("BCA token at /openapi: responseCode 2007300, tokenType bearer, 25-char X-TIMESTAMP")
+    void bcaToken() {
+        TestPartner partner = signupWithKey(Bank.BCA, false, 900);
+        SnapTestClient client = snapClient(partner);
+        APIResponse response = client.token(client.tokenHeaders(SnapTestClient.now()), GRANT);
+        assertThat(response.status()).isEqualTo(200);
+        JsonNode body = SnapTestClient.json(response);
+        assertThat(body.get("responseCode").asString()).isEqualTo("2007300");
+        assertThat(body.get("responseMessage").asString()).isEqualTo("Successful");
+        assertThat(body.get("tokenType").asString()).isEqualTo("bearer");
+        assertThat(body.get("expiresIn").asString()).isEqualTo("900");
+        assertThat(body.get("accessToken").asString()).hasSize(64);
+        assertThat(response.headers().get("x-timestamp")).hasSize(25);
+    }
+
+    @Test
+    @DisplayName("A client id is only valid at its own bank's token endpoint")
+    void bankMismatch() {
+        TestPartner bri = signupWithKey(Bank.BRI, false, 300);
+        Map<String, String> headers = snapClient(bri).tokenHeaders(SnapTestClient.now());
+        RequestOptions options = RequestOptions.create().setData(GRANT);
+        headers.forEach(options::setHeader);
+        assertCode(api.post("/openapi/v1.0/access-token/b2b", options), "4017300", "Unauthorized. Unknown client");
     }
 
     static JsonNode assertCode(APIResponse response, String code, String message) {

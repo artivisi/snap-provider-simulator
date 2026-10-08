@@ -4,7 +4,7 @@ useDefault = true
 [allowlist]
 description = "Test fixtures: a test-only RSA key, and tests that feed dummy PEM armour (bodies like AAAA) to the key parser"
 paths = [
-    '''src/test/resources/keys/bank-test-private\.pem''',
+    '''src/test/resources/keys/(bri|bca)-private\.pem''',
     '''src/test/java/com/artivisi/snapsimulator/snap/PemKeysTest\.java''',
     '''src/test/java/com/artivisi/snapsimulator/config/BankKeysTest\.java''',
 ]

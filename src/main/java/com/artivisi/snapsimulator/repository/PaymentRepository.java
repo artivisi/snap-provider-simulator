@@ -13,14 +13,14 @@ import java.util.UUID;
 
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
-    Optional<Payment> findFirstByPartnerIdAndVirtualAccountNoOrderByPaidAtDesc(UUID partnerId, String virtualAccountNo);
+    Optional<Payment> findFirstByConnectionIdAndVirtualAccountNoOrderByPaidAtDesc(UUID connectionId, String virtualAccountNo);
 
-    Optional<Payment> findByPartnerIdAndVirtualAccountNoAndPaymentRequestId(UUID partnerId, String virtualAccountNo,
+    Optional<Payment> findByConnectionIdAndVirtualAccountNoAndPaymentRequestId(UUID connectionId, String virtualAccountNo,
             String paymentRequestId);
 
-    Optional<Payment> findByIdAndPartnerId(UUID id, UUID partnerId);
+    Optional<Payment> findByIdAndConnectionId(UUID id, UUID connectionId);
 
-    List<Payment> findByPartnerIdOrderByPaidAtDesc(UUID partnerId);
+    List<Payment> findByConnectionIdOrderByPaidAtDesc(UUID connectionId);
 
     /** Records a notification attempt without re-saving the (detached) entity. */
     @Transactional

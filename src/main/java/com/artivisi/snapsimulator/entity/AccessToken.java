@@ -25,8 +25,8 @@ public class AccessToken {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id")
-    private Partner partner;
+    @JoinColumn(name = "connection_id")
+    private BankConnection connection;
 
     private String token;
     private Instant createdAt;

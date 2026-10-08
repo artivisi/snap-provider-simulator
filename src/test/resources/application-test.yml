@@ -3,7 +3,7 @@
 simulator:
   timestamp-skew: 5m
   bank:
-    private-key-path: src/test/resources/keys/bank-test-private.pem
+    key-dir: src/test/resources/keys
   operator:
     username: operator
     password: operator-test-password

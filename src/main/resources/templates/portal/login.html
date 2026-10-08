@@ -6,6 +6,7 @@
     <h1>Partner log in</h1>
     <p class="alert error" th:if="${param.error}" id="login-error">Wrong email or password, or the account is disabled.</p>
     <p class="alert" th:if="${param.logout}" id="logout-message">Logged out.</p>
+    <p class="alert" th:if="${param.registered}" id="registered-message">Account created. Log in to add a bank connection.</p>
     <form th:action="@{/portal/login}" method="post" class="stack">
         <label>Email <input type="email" name="username" id="email" required autofocus></label>
         <label>Password <input type="password" name="password" id="password" required></label>

@@ -38,7 +38,7 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     SecurityFilterChain snapChain(HttpSecurity http) {
-        http.securityMatcher("/snap/**", "/keys/**", "/actuator/health", "/actuator/health/**")
+        http.securityMatcher("/snap/**", "/openapi/**", "/keys/**", "/actuator/health", "/actuator/health/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable())
                 .requestCache(cache -> cache.disable())

@@ -1,7 +1,7 @@
 package com.artivisi.snapsimulator.dto.form;
 
 import com.artivisi.snapsimulator.dto.SettingsRequest;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +20,7 @@ public class SettingsForm {
     @NotNull(message = "choose on or off")
     private Boolean diagnosticMode;
 
-    public static SettingsForm of(Partner p) {
+    public static SettingsForm of(BankConnection p) {
         SettingsForm form = new SettingsForm();
         form.setTokenTtlSeconds(p.getTokenTtlSeconds());
         form.setDiagnosticMode(p.isDiagnosticMode());

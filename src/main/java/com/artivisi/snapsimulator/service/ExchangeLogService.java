@@ -28,12 +28,12 @@ public class ExchangeLogService {
         logs.save(entry);
     }
 
-    public List<ExchangeLog> recent(UUID partnerId, int limit) {
-        return logs.findByPartnerIdOrderByCreatedAtDesc(partnerId, PageRequest.of(0, limit));
+    public List<ExchangeLog> recent(UUID connectionId, int limit) {
+        return logs.findByConnectionIdOrderByCreatedAtDesc(connectionId, PageRequest.of(0, limit));
     }
 
-    public ExchangeLog get(UUID partnerId, UUID id) {
-        return logs.findById(id).filter(l -> partnerId.equals(l.getPartnerId()))
+    public ExchangeLog get(UUID connectionId, UUID id) {
+        return logs.findById(id).filter(l -> connectionId.equals(l.getConnectionId()))
                 .orElseThrow(() -> new com.artivisi.snapsimulator.exception.NotFoundException("exchange " + id + " not found"));
     }
 }

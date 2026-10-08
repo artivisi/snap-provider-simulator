@@ -20,13 +20,13 @@ public class ExternalIdService {
         this.jdbc = jdbc;
     }
 
-    /** False when the id was already used by this partner on the same Jakarta day (A9, A33). */
+    /** False when the id was already used by this connection on the same Jakarta day (A9, A33). */
     @Transactional
     @SpecRef("snap.external-id")
-    public boolean register(UUID partnerId, String externalId, Instant now) {
+    public boolean register(UUID connectionId, String externalId, Instant now) {
         Date day = Date.valueOf(now.atZone(SnapTimestamp.JAKARTA).toLocalDate());
         return jdbc.update("""
-                INSERT INTO external_id (partner_id, business_date, external_id, created_at) VALUES (?, ?, ?, ?)
-                ON CONFLICT DO NOTHING""", partnerId, day, externalId, Timestamp.from(now)) == 1;
+                INSERT INTO external_id (connection_id, business_date, external_id, created_at) VALUES (?, ?, ?, ?)
+                ON CONFLICT DO NOTHING""", connectionId, day, externalId, Timestamp.from(now)) == 1;
     }
 }

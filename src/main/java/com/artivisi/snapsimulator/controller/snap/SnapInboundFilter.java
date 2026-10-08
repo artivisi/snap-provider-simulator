@@ -2,14 +2,14 @@ package com.artivisi.snapsimulator.controller.snap;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.entity.ExchangeLog;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.bank.BankProfiles;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.enums.Direction;
 import com.artivisi.snapsimulator.exception.SnapException;
 import com.artivisi.snapsimulator.service.ExchangeLogService;
 import com.artivisi.snapsimulator.service.InjectionService;
 import com.artivisi.snapsimulator.service.SnapAuthenticator;
 import com.artivisi.snapsimulator.snap.SnapService;
-import com.artivisi.snapsimulator.snap.SnapTimestamp;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,23 +32,25 @@ import java.util.UUID;
 
 /**
  * Runs the check chain before every inbound SNAP call and records the exchange.
- * Handlers read the authenticated partner from {@link #PARTNER}.
+ * Handlers read the authenticated bank connection from {@link #CONNECTION}.
  */
 @Component
 public class SnapInboundFilter extends OncePerRequestFilter {
 
-    public static final String PARTNER = "snap.partner";
+    public static final String CONNECTION = "snap.connection";
     public static final String SERVICE = "snap.service";
 
     private final SnapAuthenticator authenticator;
     private final ExchangeLogService exchangeLog;
     private final InjectionService injections;
+    private final BankProfiles profiles;
     private final JsonMapper json;
     private final Clock clock;
 
     public SnapInboundFilter(SnapAuthenticator authenticator, ExchangeLogService exchangeLog,
-            InjectionService injections, JsonMapper json, Clock clock) {
+            InjectionService injections, BankProfiles profiles, JsonMapper json, Clock clock) {
         this.authenticator = authenticator;
+        this.profiles = profiles;
         this.exchangeLog = exchangeLog;
         this.injections = injections;
         this.json = json;
@@ -71,14 +73,14 @@ public class SnapInboundFilter extends OncePerRequestFilter {
         CachedBodyRequest wrapped = new CachedBodyRequest(request, request.getInputStream().readAllBytes());
         ContentCachingResponseWrapper captured = new ContentCachingResponseWrapper(response);
         wrapped.setAttribute(SERVICE, svc);
-        captured.setHeader("X-TIMESTAMP", SnapTimestamp.format(now));
+        captured.setHeader("X-TIMESTAMP", profiles.of(svc.bank()).timestamp(now));
         String error = null;
         try {
-            Partner partner = svc == SnapService.ACCESS_TOKEN_B2B
-                    ? authenticator.authenticateToken(wrapped, now)
+            BankConnection connection = svc.isToken()
+                    ? authenticator.authenticateToken(wrapped, svc, now)
                     : authenticator.authenticateService(wrapped, wrapped.bodyText(), svc, now);
-            wrapped.setAttribute(PARTNER, partner);
-            Optional<InjectionService.Taken> rule = injections.take(partner.getId(), svc.name());
+            wrapped.setAttribute(CONNECTION, connection);
+            Optional<InjectionService.Taken> rule = injections.take(connection.getId(), svc.name());
             if (rule.isEmpty()) {
                 chain.doFilter(wrapped, captured);
             } else {
@@ -133,7 +135,7 @@ public class SnapInboundFilter extends OncePerRequestFilter {
             String error) {
         ExchangeLog entry = new ExchangeLog();
         entry.setCreatedAt(now);
-        entry.setPartnerId((UUID) request.getAttribute(SnapAuthenticator.PARTNER_ID));
+        entry.setConnectionId((UUID) request.getAttribute(SnapAuthenticator.CONNECTION_ID));
         entry.setDirection(Direction.INBOUND);
         entry.setMethod(request.getMethod());
         entry.setUrl(request.getRequestURI() + Optional.ofNullable(request.getQueryString()).map(q -> "?" + q).orElse(""));

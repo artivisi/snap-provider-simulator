@@ -3,13 +3,15 @@
 <head><title>Endpoint · SNAP Provider Simulator</title></head>
 <body>
 <main class="narrow">
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
     <h1>Partner endpoint</h1>
-    <p>For bank-to-partner calls: the simulator requests a token from
+    <p>For bank-to-partner calls: the bank requests a token from
         <code>{base URL}/v1.0/access-token/b2b</code>, then calls
         <code>{base URL}/v1.0/transfer-va/inquiry</code> and <code>/payment</code>. Client id and secret are the
-        ones your app issued to the bank.</p>
+        ones your app issued to the bank. BCA partners usually serve these under <code>/openapi</code>: include it
+        in the base URL.</p>
     <p class="alert" th:if="${message}" th:text="${message}" id="flash-message"></p>
-    <form th:action="@{/portal/endpoint}" th:object="${form}" method="post" class="stack" id="endpoint-form">
+    <form th:action="@{/portal/c/{id}/endpoint(id=${conn.id})}" th:object="${form}" method="post" class="stack" id="endpoint-form">
         <label>Base URL
             <input type="url" th:field="*{baseUrl}" required placeholder="http://host.docker.internal:8080/snap">
             <span class="field-error" th:if="${#fields.hasErrors('baseUrl')}" th:errors="*{baseUrl}"></span>
@@ -28,7 +30,7 @@
         <h2>Test connection</h2>
         <p>The bank requests a token from <code>{base URL}/v1.0/access-token/b2b</code>, signed with the bank key.</p>
         <button type="button" class="secondary" id="test-connection"
-                th:attr="hx-post=@{/portal/endpoint/test}" hx-target="#connection-result" hx-swap="outerHTML">Test connection</button>
+                th:attr="hx-post=@{/portal/c/{id}/endpoint/test(id=${conn.id})}" hx-target="#connection-result" hx-swap="outerHTML">Test connection</button>
         <div id="connection-result"></div>
     </section>
 </main>

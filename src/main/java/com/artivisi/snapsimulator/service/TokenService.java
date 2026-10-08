@@ -2,7 +2,7 @@ package com.artivisi.snapsimulator.service;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.entity.AccessToken;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.enums.ChecklistItem;
 import com.artivisi.snapsimulator.repository.AccessTokenRepository;
 import com.artivisi.snapsimulator.util.Randoms;
@@ -29,19 +29,20 @@ public class TokenService {
     /** Each request gets a new token; earlier ones stay valid until they expire (A14). */
     @Transactional
     @SpecRef("bri.oauth.token-b2b")
-    public AccessToken issue(Partner partner, Instant now) {
+    @SpecRef("bca.oauth.token-b2b")
+    public AccessToken issue(BankConnection connection, Instant now) {
         AccessToken token = new AccessToken();
-        token.setPartner(partner);
+        token.setConnection(connection);
         token.setToken(Randoms.alphanumeric(TOKEN_LENGTH));
         token.setCreatedAt(now);
-        token.setExpiresAt(now.plusSeconds(partner.getTokenTtlSeconds()));
+        token.setExpiresAt(now.plusSeconds(connection.getTokenTtlSeconds()));
         tokens.save(token);
-        checklist.stamp(partner.getId(), ChecklistItem.TOKEN_OBTAINED, now);
+        checklist.stamp(connection.getId(), ChecklistItem.TOKEN_OBTAINED, now);
         return token;
     }
 
-    /** The token's partner, if the token exists and has not expired. */
-    public Optional<Partner> resolve(String token, Instant now) {
-        return tokens.findByToken(token).filter(t -> t.getExpiresAt().isAfter(now)).map(AccessToken::getPartner);
+    /** The token's connection, if the token exists and has not expired. */
+    public Optional<BankConnection> resolve(String token, Instant now) {
+        return tokens.findByToken(token).filter(t -> t.getExpiresAt().isAfter(now)).map(AccessToken::getConnection);
     }
 }

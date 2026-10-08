@@ -17,7 +17,7 @@ public class RequiredEnvironment implements ApplicationListener<ApplicationEnvir
             "SIMULATOR_DB_USERNAME",
             "SIMULATOR_DB_PASSWORD",
             "SIMULATOR_TIMESTAMP_SKEW",
-            "SIMULATOR_BANK_PRIVATE_KEY_PATH",
+            "SIMULATOR_BANK_KEY_DIR",
             "SIMULATOR_OPERATOR_USERNAME",
             "SIMULATOR_OPERATOR_PASSWORD",
             "SIMULATOR_OUTBOUND_CONNECT_TIMEOUT",

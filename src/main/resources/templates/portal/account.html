@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Bank connections · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>Bank connections</h1>
+    <p>Signed in as <strong id="account-email" th:text="${account.email}"></strong>. Each connection is your
+        app's registration with one bank: its own credentials, key, endpoint, settings and data.</p>
+
+    <section>
+        <p th:if="${account.connections.isEmpty()}" id="no-connections">No bank connections yet.</p>
+        <table class="table" id="connections" th:unless="${account.connections.isEmpty()}">
+            <thead><tr><th>Bank</th><th>partnerServiceId</th><th>Client id</th><th>Checklist</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${account.connections}" th:attr="data-testid=|connection-${c.bank}-${c.partnerServiceId.trim()}|">
+                <td><span class="badge bank" th:text="${c.bank}"></span></td>
+                <td><code th:text="|&quot;${c.partnerServiceId}&quot;|"></code></td>
+                <td><code th:text="${c.clientId}"></code></td>
+                <td class="checklist-progress" th:text="|${c.stepsDone()} / ${c.checklist.size()}|"></td>
+                <td><a th:href="@{/portal/c/{id}(id=${c.id})}" class="open-connection">Open</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Add bank connection</h2>
+        <form th:action="@{/portal/connections}" th:object="${form}" method="post" class="stack" id="connection-form">
+            <fieldset>
+                <legend>Bank</legend>
+                <label class="choice" th:each="b : ${banks}">
+                    <input type="radio" th:field="*{bank}" th:value="${b}" required> <span th:text="${b}"></span>
+                </label>
+                <span class="field-error" th:if="${#fields.hasErrors('bank')}" th:errors="*{bank}"></span>
+            </fieldset>
+            <label>Access token lifetime, seconds (10–86400)
+                <input type="number" th:field="*{tokenTtlSeconds}" required min="10" max="86400">
+                <span class="field-error" th:if="${#fields.hasErrors('tokenTtlSeconds')}" th:errors="*{tokenTtlSeconds}"></span>
+            </label>
+            <fieldset>
+                <legend>Diagnostic mode</legend>
+                <p class="hint">When on, a failed signature check returns the string-to-sign and body hashes the
+                    simulator expected. Real banks never do this.</p>
+                <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="true" required> On</label>
+                <label class="choice"><input type="radio" th:field="*{diagnosticMode}" value="false"> Off</label>
+                <span class="field-error" th:if="${#fields.hasErrors('diagnosticMode')}" th:errors="*{diagnosticMode}"></span>
+            </fieldset>
+            <button type="submit" id="connection-submit">Add connection</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

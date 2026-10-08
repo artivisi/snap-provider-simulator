@@ -1,25 +1,44 @@
 package com.artivisi.snapsimulator.snap;
 
+import com.artivisi.snapsimulator.enums.Bank;
+
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
-/** Inbound SNAP services: method, path and the service code used in responseCode. */
+/** Inbound SNAP services per bank: method, path and the service code used in responseCode. */
 public enum SnapService {
-    ACCESS_TOKEN_B2B("POST", "/snap/v1.0/access-token/b2b", "73"),
-    CREATE_VA("POST", "/snap/v1.0/transfer-va/create-va", "27"),
-    UPDATE_VA("PUT", "/snap/v1.0/transfer-va/update-va", "28"),
-    INQUIRY_VA("POST", "/snap/v1.0/transfer-va/inquiry-va", "30"),
-    DELETE_VA("DELETE", "/snap/v1.0/transfer-va/delete-va", "31"),
-    INQUIRY_STATUS("POST", "/snap/v1.0/transfer-va/status", "26");
+    BRI_ACCESS_TOKEN(Bank.BRI, "POST", "/snap/v1.0/access-token/b2b", "73"),
+    BRI_CREATE_VA(Bank.BRI, "POST", "/snap/v1.0/transfer-va/create-va", "27"),
+    BRI_UPDATE_VA(Bank.BRI, "PUT", "/snap/v1.0/transfer-va/update-va", "28"),
+    BRI_INQUIRY_VA(Bank.BRI, "POST", "/snap/v1.0/transfer-va/inquiry-va", "30"),
+    BRI_DELETE_VA(Bank.BRI, "DELETE", "/snap/v1.0/transfer-va/delete-va", "31"),
+    BRI_INQUIRY_STATUS(Bank.BRI, "POST", "/snap/v1.0/transfer-va/status", "26"),
+    BCA_ACCESS_TOKEN(Bank.BCA, "POST", "/openapi/v1.0/access-token/b2b", "73"),
+    BCA_INQUIRY_STATUS(Bank.BCA, "POST", "/openapi/v2.0/transfer-va/status", "26");
 
+    private final Bank bank;
     private final String method;
     private final String path;
     private final String code;
 
-    SnapService(String method, String path, String code) {
+    SnapService(Bank bank, String method, String path, String code) {
+        this.bank = bank;
         this.method = method;
         this.path = path;
         this.code = code;
+    }
+
+    public Bank bank() {
+        return bank;
+    }
+
+    public boolean isToken() {
+        return this == BRI_ACCESS_TOKEN || this == BCA_ACCESS_TOKEN;
+    }
+
+    public static List<SnapService> of(Bank bank) {
+        return Arrays.stream(values()).filter(s -> s.bank == bank).toList();
     }
 
     public String method() {

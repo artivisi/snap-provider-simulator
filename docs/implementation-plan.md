@@ -60,7 +60,7 @@ spring:
 simulator:
   timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}                  # e.g. 5m
   bank:
-    private-key-path: ${SIMULATOR_BANK_PRIVATE_KEY_PATH}       # one bank identity for all partners
+    key-dir: ${SIMULATOR_BANK_KEY_DIR}                         # bri-private.pem, bca-private.pem
   operator:
     username: ${SIMULATOR_OPERATOR_USERNAME}                   # /admin login
     password: ${SIMULATOR_OPERATOR_PASSWORD}
@@ -69,10 +69,10 @@ simulator:
     read-timeout: ${SIMULATOR_OUTBOUND_READ_TIMEOUT}
 ```
 
-The bank key is loaded at startup; a missing or unparsable key stops startup
-with a message that names the path. The bank public key is served at
-`GET /keys/bank-public.pem` (public) so partner apps can verify bank-to-partner
-calls.
+One key per bank is loaded at startup; a missing or unparsable key stops
+startup with a message that names the file. The public keys are served at
+`GET /keys/bri-public.pem` and `GET /keys/bca-public.pem` so partner apps can
+verify the bank's token requests.
 
 ### Partner onboarding (self-service portal, `/portal`)
 
@@ -192,8 +192,7 @@ Each portal page has a JSON counterpart under `/portal/api/...` with the same
 session auth, so tests and scripts can drive it.
 
 - Portal: sign-up, login, credentials (regenerate secret), key upload, bank key
-  download (`GET /portal/keys/bank-public.pem`, also public at
-  `GET /keys/bank-public.pem`), endpoint + test connection, settings,
+  download (`GET /keys/{bri|bca}-public.pem`), endpoint + test connection, settings,
   checklist
 - Portal workspace: VAs and pay action, simulate customer payment
   (`virtualAccountNo`, `amount`, `channelId`), resend, exchange log,
@@ -281,3 +280,9 @@ Per `docs/engineering-standard.md` (Container, CI, Versioning):
 4. **PostgreSQL, multi-partner** (2026-10-07): state persists across restarts and several partner apps share one simulator, each with its own credentials, keys, settings and data.
 5. **Self-service onboarding** (2026-10-07): open sign-up; simulator assigns `partnerServiceId`; operator admin login from env. Supersedes admin-only registration. Included in 2026.10-RELEASE.
 6. **Engineering standard** (2026-10-07): Balaka practices scaled to a test tool; CalVer; English UI; no ZAP or production hardening; gates are spec↔code↔test traceability and ≥70% coverage. See `docs/engineering-standard.md`.
+7. **Two banks in the first release** (2026-10-08): BRI and BCA (BCA "Virtual
+   Account for Biller", public docs). A partner account holds one bank
+   connection per bank; credentials, key, endpoint, settings, checklist and all
+   data belong to the connection. Bank differences live in `BankProfile`
+   implementations. BCA multi-bill payments pay every bill from the inquiry;
+   choosing bills is out of scope. Supersedes the single-bank partner model.

@@ -1,11 +1,13 @@
 package com.artivisi.snapsimulator.service;
 
 import com.artivisi.snapsimulator.SpecRef;
+import com.artivisi.snapsimulator.bank.BankProfile;
+import com.artivisi.snapsimulator.bank.BankProfiles;
 import com.artivisi.snapsimulator.config.SimulatorProperties;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.enums.ChecklistItem;
 import com.artivisi.snapsimulator.exception.SnapException;
-import com.artivisi.snapsimulator.repository.PartnerRepository;
+import com.artivisi.snapsimulator.repository.BankConnectionRepository;
 import com.artivisi.snapsimulator.snap.PemKeys;
 import com.artivisi.snapsimulator.snap.SignatureDiagnostics;
 import com.artivisi.snapsimulator.snap.SnapService;
@@ -30,42 +32,42 @@ import java.util.regex.Pattern;
 @Service
 public class SnapAuthenticator {
 
-    public static final String PARTNER_ID = "snap.partnerId";
+    public static final String CONNECTION_ID = "snap.connectionId";
     public static final String STRING_TO_SIGN = "snap.stringToSign";
 
-    private static final Pattern PARTNER_ID_FORMAT = Pattern.compile("[A-Za-z0-9]{1,36}");
     private static final Pattern CHANNEL_ID_FORMAT = Pattern.compile("\\d{5}");
     private static final Pattern EXTERNAL_ID_FORMAT = Pattern.compile("\\d{1,36}");
 
-    private final PartnerRepository partners;
+    private final BankConnectionRepository connections;
     private final TokenService tokens;
     private final ExternalIdService externalIds;
     private final ChecklistService checklist;
+    private final BankProfiles profiles;
     private final SimulatorProperties properties;
 
-    public SnapAuthenticator(PartnerRepository partners, TokenService tokens, ExternalIdService externalIds,
-            ChecklistService checklist, SimulatorProperties properties) {
-        this.partners = partners;
+    public SnapAuthenticator(BankConnectionRepository connections, TokenService tokens, ExternalIdService externalIds,
+            ChecklistService checklist, BankProfiles profiles, SimulatorProperties properties) {
+        this.connections = connections;
         this.tokens = tokens;
         this.externalIds = externalIds;
         this.checklist = checklist;
+        this.profiles = profiles;
         this.properties = properties;
     }
 
-    /** Asymmetric check for the B2B token request. */
+    /** Asymmetric check for the B2B token request; the client id must belong to the path's bank. */
     @SpecRef("snap.headers.token")
     @SpecRef("snap.sig.asymmetric-token")
-    public Partner authenticateToken(HttpServletRequest request, Instant now) {
-        SnapService svc = SnapService.ACCESS_TOKEN_B2B;
+    public BankConnection authenticateToken(HttpServletRequest request, SnapService svc, Instant now) {
         requireJson(request, svc);
         String clientKey = mandatory(request, "X-CLIENT-KEY", svc);
         String timestamp = mandatory(request, "X-TIMESTAMP", svc);
         String signature = mandatory(request, "X-SIGNATURE", svc);
         OffsetDateTime parsed = parseTimestamp(timestamp, svc);
 
-        Partner partner = partners.findByClientId(clientKey)
+        BankConnection partner = connections.findByClientId(clientKey).filter(c -> c.getBank() == svc.bank())
                 .orElseThrow(() -> new SnapException(svc.unauthorized("Unknown client")));
-        request.setAttribute(PARTNER_ID, partner.getId());
+        request.setAttribute(CONNECTION_ID, partner.getId());
         request.setAttribute(STRING_TO_SIGN, SnapSignature.asymmetricStringToSign(clientKey, timestamp));
         requireEnabled(partner, svc);
         checkSkew(partner, parsed, timestamp, now, svc);
@@ -83,14 +85,17 @@ public class SnapAuthenticator {
     @SpecRef("snap.sig.symmetric")
     @SpecRef("snap.sig.timestamp")
     @SpecRef("snap.external-id")
-    public Partner authenticateService(HttpServletRequest request, String body, SnapService svc, Instant now) {
+    @SpecRef("bca.headers.service")
+    public BankConnection authenticateService(HttpServletRequest request, String body, SnapService svc, Instant now) {
         String authorization = request.getHeader("Authorization");
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             throw new SnapException(svc.invalidToken());
         }
         String accessToken = authorization.substring("Bearer ".length());
-        Partner partner = tokens.resolve(accessToken, now).orElseThrow(() -> new SnapException(svc.invalidToken()));
-        request.setAttribute(PARTNER_ID, partner.getId());
+        BankConnection partner = tokens.resolve(accessToken, now).filter(c -> c.getBank() == svc.bank())
+                .orElseThrow(() -> new SnapException(svc.invalidToken()));
+        request.setAttribute(CONNECTION_ID, partner.getId());
+        BankProfile profile = profiles.of(svc.bank());
         requireEnabled(partner, svc);
 
         requireJson(request, svc);
@@ -99,13 +104,13 @@ public class SnapAuthenticator {
         String partnerIdHeader = mandatory(request, "X-PARTNER-ID", svc);
         String channelId = mandatory(request, "CHANNEL-ID", svc);
         String externalId = mandatory(request, "X-EXTERNAL-ID", svc);
-        requireFormat(partnerIdHeader, PARTNER_ID_FORMAT, "X-PARTNER-ID", svc);
+        profile.checkPartnerIdHeader(partnerIdHeader, partner, svc);
         requireFormat(channelId, CHANNEL_ID_FORMAT, "CHANNEL-ID", svc);
         requireFormat(externalId, EXTERNAL_ID_FORMAT, "X-EXTERNAL-ID", svc);
         OffsetDateTime parsed = parseTimestamp(timestamp, svc);
         checkSkew(partner, parsed, timestamp, now, svc);
 
-        String path = request.getRequestURI();
+        String path = profile.signedPath(request.getRequestURI(), request.getQueryString());
         String stringToSign;
         try {
             stringToSign = SnapSignature.symmetricStringToSign(request.getMethod(), path, accessToken, body, timestamp);
@@ -156,13 +161,13 @@ public class SnapAuthenticator {
         }
     }
 
-    private static void requireEnabled(Partner partner, SnapService svc) {
+    private static void requireEnabled(BankConnection partner, SnapService svc) {
         if (!partner.isEnabled()) {
             throw new SnapException(svc.unauthorized("Client disabled"));
         }
     }
 
-    private void checkSkew(Partner partner, OffsetDateTime parsed, String timestamp, Instant now, SnapService svc) {
+    private void checkSkew(BankConnection partner, OffsetDateTime parsed, String timestamp, Instant now, SnapService svc) {
         if (!SnapTimestamp.withinSkew(parsed, now, properties.timestampSkew())) {
             Map<String, String> diagnostic = null;
             if (partner.isDiagnosticMode()) {

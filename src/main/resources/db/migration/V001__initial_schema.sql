@@ -1,12 +1,22 @@
--- One row per partner app; every other table is scoped by partner_id.
+-- A partner app's account; it holds one or more bank connections.
 CREATE TABLE partner (
+    id            UUID PRIMARY KEY,
+    version       BIGINT       NOT NULL,
+    created_at    TIMESTAMPTZ  NOT NULL,
+    updated_at    TIMESTAMPTZ  NOT NULL,
+    email         VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(100) NOT NULL,
+    enabled       BOOLEAN      NOT NULL
+);
+
+-- The partner's registration with one bank; all simulation data is keyed by it.
+CREATE TABLE bank_connection (
     id                      UUID PRIMARY KEY,
     version                 BIGINT       NOT NULL,
     created_at              TIMESTAMPTZ  NOT NULL,
     updated_at              TIMESTAMPTZ  NOT NULL,
-    email                   VARCHAR(255) NOT NULL UNIQUE,
-    password_hash           VARCHAR(100) NOT NULL,
-    enabled                 BOOLEAN      NOT NULL,
+    partner_id              UUID         NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    bank                    VARCHAR(8)   NOT NULL,
     partner_service_id      VARCHAR(8)   NOT NULL UNIQUE,
     client_id               VARCHAR(64)  NOT NULL UNIQUE,
     client_secret           VARCHAR(128) NOT NULL,
@@ -26,25 +36,26 @@ CREATE TABLE partner (
     CHECK ((endpoint_base_url IS NULL AND endpoint_client_id IS NULL AND endpoint_client_secret IS NULL)
         OR (endpoint_base_url IS NOT NULL AND endpoint_client_id IS NOT NULL AND endpoint_client_secret IS NOT NULL))
 );
+CREATE INDEX bank_connection_partner_idx ON bank_connection (partner_id);
 
 -- VA prefixes are handed out in order.
 CREATE SEQUENCE partner_service_id_seq START WITH 10001 MAXVALUE 99999999;
 
 CREATE TABLE access_token (
     id         UUID PRIMARY KEY,
-    partner_id UUID         NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id UUID      NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     token      VARCHAR(128) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ  NOT NULL,
     expires_at TIMESTAMPTZ  NOT NULL
 );
-CREATE INDEX access_token_partner_idx ON access_token (partner_id);
+CREATE INDEX access_token_connection_idx ON access_token (connection_id);
 
 CREATE TABLE external_id (
-    partner_id    UUID        NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id UUID        NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     business_date DATE        NOT NULL,
     external_id   VARCHAR(36) NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL,
-    PRIMARY KEY (partner_id, business_date, external_id)
+    PRIMARY KEY (connection_id, business_date, external_id)
 );
 
 CREATE TABLE virtual_account (
@@ -52,7 +63,7 @@ CREATE TABLE virtual_account (
     version               BIGINT        NOT NULL,
     created_at            TIMESTAMPTZ   NOT NULL,
     updated_at            TIMESTAMPTZ   NOT NULL,
-    partner_id            UUID          NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id         UUID          NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     customer_no           VARCHAR(20)   NOT NULL,
     virtual_account_no    VARCHAR(28)   NOT NULL,
     virtual_account_name  VARCHAR(255)  NOT NULL,
@@ -65,9 +76,9 @@ CREATE TABLE virtual_account (
     status                VARCHAR(16)   NOT NULL,
     additional_json       TEXT,
     paid_at               TIMESTAMPTZ,
-    UNIQUE (partner_id, trx_id)
+    UNIQUE (connection_id, trx_id)
 );
-CREATE UNIQUE INDEX virtual_account_active_no_idx ON virtual_account (partner_id, virtual_account_no)
+CREATE UNIQUE INDEX virtual_account_active_no_idx ON virtual_account (connection_id, virtual_account_no)
     WHERE status = 'ACTIVE';
 
 CREATE TABLE payment (
@@ -75,7 +86,7 @@ CREATE TABLE payment (
     version             BIGINT        NOT NULL,
     created_at          TIMESTAMPTZ   NOT NULL,
     updated_at          TIMESTAMPTZ   NOT NULL,
-    partner_id          UUID          NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id       UUID          NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     virtual_account_id  UUID          REFERENCES virtual_account (id) ON DELETE SET NULL,
     va_model            VARCHAR(16)   NOT NULL,
     virtual_account_no  VARCHAR(28)   NOT NULL,
@@ -83,6 +94,7 @@ CREATE TABLE payment (
     amount              NUMERIC(18,2) NOT NULL,
     currency            VARCHAR(3)    NOT NULL,
     channel_id          VARCHAR(5)    NOT NULL,
+    reference_no        VARCHAR(11),
     payment_request_id  VARCHAR(128)  NOT NULL,
     external_id         VARCHAR(36),
     notified_amount     NUMERIC(18,2),
@@ -90,12 +102,12 @@ CREATE TABLE payment (
     notification_body   TEXT,
     paid_at             TIMESTAMPTZ   NOT NULL
 );
-CREATE INDEX payment_partner_idx ON payment (partner_id, paid_at);
+CREATE INDEX payment_connection_idx ON payment (connection_id, paid_at);
 
 CREATE TABLE ledger_entry (
     id                 UUID PRIMARY KEY,
     created_at         TIMESTAMPTZ   NOT NULL,
-    partner_id         UUID          NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id      UUID          NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     payment_id         UUID          REFERENCES payment (id) ON DELETE SET NULL,
     journal_id         VARCHAR(32)   NOT NULL UNIQUE,
     transaction_time   TIMESTAMPTZ   NOT NULL,
@@ -105,12 +117,12 @@ CREATE TABLE ledger_entry (
     virtual_account_no VARCHAR(28)   NOT NULL,
     remark             VARCHAR(255)  NOT NULL
 );
-CREATE INDEX ledger_entry_partner_idx ON ledger_entry (partner_id, transaction_time);
+CREATE INDEX ledger_entry_connection_idx ON ledger_entry (connection_id, transaction_time);
 
 CREATE TABLE exchange_log (
     id               UUID PRIMARY KEY,
     created_at       TIMESTAMPTZ  NOT NULL,
-    partner_id       UUID         REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id    UUID         REFERENCES bank_connection (id) ON DELETE CASCADE,
     direction        VARCHAR(8)   NOT NULL,
     method           VARCHAR(8)   NOT NULL,
     url              VARCHAR(1000) NOT NULL,
@@ -123,18 +135,18 @@ CREATE TABLE exchange_log (
     error            TEXT,
     duration_ms      BIGINT       NOT NULL
 );
-CREATE INDEX exchange_log_partner_idx ON exchange_log (partner_id, created_at DESC);
+CREATE INDEX exchange_log_connection_idx ON exchange_log (connection_id, created_at DESC);
 
 CREATE TABLE injection_rule (
     id          UUID PRIMARY KEY,
     version     BIGINT      NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL,
     updated_at  TIMESTAMPTZ NOT NULL,
-    partner_id  UUID        NOT NULL REFERENCES partner (id) ON DELETE CASCADE,
+    connection_id UUID      NOT NULL REFERENCES bank_connection (id) ON DELETE CASCADE,
     target      VARCHAR(64) NOT NULL,
     rule_type   VARCHAR(32) NOT NULL,
     delay_ms    BIGINT,
     http_status INTEGER,
     remaining   INTEGER     NOT NULL CHECK (remaining >= 0)
 );
-CREATE INDEX injection_rule_partner_idx ON injection_rule (partner_id, target);
+CREATE INDEX injection_rule_connection_idx ON injection_rule (connection_id, target);

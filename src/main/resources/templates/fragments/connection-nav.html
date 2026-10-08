@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="nav" class="subnav" id="connection-nav">
+    <span class="badge bank" id="connection-bank" th:text="${conn.bank}"></span>
+    <code th:text="|&quot;${conn.partnerServiceId}&quot;|"></code>
+    <a th:href="@{/portal/c/{id}(id=${conn.id})}" id="nav-overview">Overview</a>
+    <a th:href="@{/portal/c/{id}/key(id=${conn.id})}" id="nav-key">Key</a>
+    <a th:href="@{/portal/c/{id}/endpoint(id=${conn.id})}" id="nav-endpoint">Endpoint</a>
+    <a th:href="@{/portal/c/{id}/settings(id=${conn.id})}" id="nav-settings">Settings</a>
+    <a th:if="${conn.bankHostedVa}" th:href="@{/portal/c/{id}/vas(id=${conn.id})}" id="nav-vas">VAs</a>
+    <a th:href="@{/portal/c/{id}/payments(id=${conn.id})}" id="nav-payments">Payments</a>
+    <a th:href="@{/portal/c/{id}/exchanges(id=${conn.id})}" id="nav-exchanges">Exchange log</a>
+    <a th:href="@{/portal/c/{id}/injections(id=${conn.id})}" id="nav-injections">Error injection</a>
+</nav>
+</body>
+</html>

@@ -3,6 +3,7 @@
 <head><title>Error injection · SNAP Provider Simulator</title></head>
 <body>
 <main>
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
     <h1>Error injection</h1>
     <p>A rule applies to the next matching call(s) and is used up after <em>remaining</em> calls.</p>
     <th:block th:replace="~{fragments/flash :: flash}"></th:block>
@@ -20,7 +21,7 @@
 
     <section>
         <h2>Add rule</h2>
-        <form th:action="@{/portal/injections}" method="post" class="stack" id="injection-form">
+        <form th:action="@{/portal/c/{id}/injections(id=${conn.id})}" method="post" class="stack" id="injection-form">
             <label>Type
                 <select name="type" id="injection-type" required>
                     <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
@@ -28,7 +29,7 @@
             </label>
             <label>Target
                 <select name="target" id="injection-target" required>
-                    <option th:each="s : ${services}" th:value="${s.name()}" th:text="|${s.name()} (inbound)|"></option>
+                    <option th:each="s : ${inboundTargets}" th:value="${s}" th:text="|${s} (inbound)|"></option>
                     <option value="INQUIRY">INQUIRY (outbound)</option>
                     <option value="PAYMENT">PAYMENT (outbound)</option>
                 </select>
@@ -59,7 +60,7 @@
                 <td th:text="${r.type}"></td><td th:text="${r.target}"></td>
                 <td th:text="${r.delayMs}"></td><td th:text="${r.httpStatus}"></td><td th:text="${r.remaining}"></td>
                 <td>
-                    <form th:action="@{/portal/injections/{id}/delete(id=${r.id})}" method="post" class="inline">
+                    <form th:action="@{/portal/c/{id}/injections/{rid}/delete(id=${conn.id},rid=${r.id})}" method="post" class="inline">
                         <button type="submit" class="danger delete-rule">Delete</button>
                     </form>
                 </td>

@@ -20,7 +20,7 @@ class SnapSignatureTest {
 
     @BeforeAll
     static void loadKey() throws Exception {
-        fixtureKey = PemKeys.parsePrivateKey(Files.readString(Path.of("src/test/resources/keys/bank-test-private.pem")));
+        fixtureKey = PemKeys.parsePrivateKey(Files.readString(Path.of("src/test/resources/keys/bri-private.pem")));
     }
 
     @Test

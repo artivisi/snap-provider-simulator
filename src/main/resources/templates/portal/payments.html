@@ -3,20 +3,21 @@
 <head><title>Payments · SNAP Provider Simulator</title></head>
 <body>
 <main>
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
     <h1>Payments</h1>
     <th:block th:replace="~{fragments/flash :: flash}"></th:block>
 
     <section>
         <h2>Simulate a customer payment (biller-hosted VA)</h2>
         <p>The bank sends an inquiry to your endpoint, credits its ledger, then sends the payment call.</p>
-        <form th:action="@{/portal/payments/biller}" method="post" class="stack" id="biller-form">
-            <label>VA number (your partnerServiceId <code th:text="|&quot;${partnerServiceId}&quot;|"></code> + customer number)
-                <input type="text" name="virtualAccountNo" id="biller-va" required th:value="${partnerServiceId}">
+        <form th:action="@{/portal/c/{id}/payments/biller(id=${conn.id})}" method="post" class="stack" id="biller-form">
+            <label>VA number (your partnerServiceId <code th:text="|&quot;${conn.partnerServiceId}&quot;|"></code> + customer number)
+                <input type="text" name="virtualAccountNo" id="biller-va" required th:value="${conn.partnerServiceId}">
             </label>
             <label>Amount <input type="text" name="amount" id="biller-amount" required placeholder="150000.00"></label>
             <label>Channel
                 <select name="channelId" id="biller-channel" required>
-                    <option th:each="c : ${channels}" th:value="${c.id()}" th:text="|${c.id()} ${c.label()}|"></option>
+                    <option th:each="c : ${channels}" th:value="${c.code()}" th:text="|${c.code()} ${c.label()}|"></option>
                 </select>
             </label>
             <button type="submit" id="biller-submit">Pay</button>
@@ -39,7 +40,7 @@
                           th:text="${p.notificationStatus}"></span></td>
                 <td><code th:text="${p.externalId}"></code></td>
                 <td>
-                    <form th:if="${p.externalId != null}" th:action="@{/portal/payments/{id}/resend(id=${p.id})}" method="post" class="inline">
+                    <form th:if="${p.externalId != null}" th:action="@{/portal/c/{id}/payments/{pid}/resend(id=${conn.id},pid=${p.id})}" method="post" class="inline">
                         <button type="submit" class="secondary resend">Resend</button>
                     </form>
                 </td>
@@ -53,7 +54,7 @@
         <p>The bank's ledger for one day (Asia/Jakarta), as CSV.</p>
         <form id="statement-form" class="inline"
               onsubmit="window.location = this.dataset.base + this.day.value + '.csv'; return false;"
-              th:attr="data-base=@{/portal/api/statements/}">
+              th:attr="data-base=@{/portal/api/connections/{id}/statements/(id=${conn.id})}">
             <input type="date" name="day" id="statement-day" th:value="${today}" required>
             <button type="submit" class="secondary" id="statement-download">Download CSV</button>
         </form>
@@ -63,11 +64,11 @@
         <h2>Reconciliation scenario</h2>
         <p>Five VA numbers your app answers inquiries for. They are paid today as: normal, normal, notification
             dropped, notified amount 1000.00 higher than credited, notified twice with different X-EXTERNAL-IDs.</p>
-        <form th:action="@{/portal/payments/seed}" method="post" class="stack" id="seed-form">
+        <form th:action="@{/portal/c/{id}/payments/seed(id=${conn.id})}" method="post" class="stack" id="seed-form">
             <label>VA numbers, one per line <textarea name="virtualAccountNos" id="seed-vas" rows="5" required></textarea></label>
             <label>Channel
                 <select name="channelId" id="seed-channel" required>
-                    <option th:each="c : ${channels}" th:value="${c.id()}" th:text="|${c.id()} ${c.label()}|"></option>
+                    <option th:each="c : ${channels}" th:value="${c.code()}" th:text="|${c.code()} ${c.label()}|"></option>
                 </select>
             </label>
             <button type="submit" class="secondary" id="seed-submit">Create scenario</button>

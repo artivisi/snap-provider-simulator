@@ -27,7 +27,7 @@ public class ExchangeLog {
 
     private Instant createdAt;
     /** Null for inbound calls that could not be attributed to a partner. */
-    private UUID partnerId;
+    private UUID connectionId;
     @Enumerated(EnumType.STRING)
     private Direction direction;
     private String method;

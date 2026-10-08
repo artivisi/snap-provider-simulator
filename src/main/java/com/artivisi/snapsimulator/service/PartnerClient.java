@@ -1,15 +1,18 @@
 package com.artivisi.snapsimulator.service;
 
 import com.artivisi.snapsimulator.SpecRef;
+import com.artivisi.snapsimulator.bank.BankProfile;
+import com.artivisi.snapsimulator.bank.BankProfiles;
+import com.artivisi.snapsimulator.bank.ChannelOption;
 import com.artivisi.snapsimulator.config.BankKeys;
+import com.artivisi.snapsimulator.dto.OutboundExchange;
 import com.artivisi.snapsimulator.config.SimulatorProperties;
 import com.artivisi.snapsimulator.entity.ExchangeLog;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.enums.ChecklistItem;
 import com.artivisi.snapsimulator.enums.Direction;
 import com.artivisi.snapsimulator.exception.OutboundException;
 import com.artivisi.snapsimulator.snap.SnapSignature;
-import com.artivisi.snapsimulator.snap.SnapTimestamp;
 import com.artivisi.snapsimulator.util.Randoms;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JacksonException;
@@ -31,9 +34,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The bank calling the partner app: B2B token signed with the bank key (A27),
- * then HMAC-signed service calls under {base URL}/v1.0 (A26). Every call,
- * including failures, is written to the exchange log.
+ * A bank calling the partner app: B2B token signed with that bank's key (A27,
+ * A39), then HMAC-signed service calls under {base URL}/v1.0 (A26). Headers and
+ * timestamps follow the connection's bank profile. Every call, including
+ * failures, is written to the exchange log.
  */
 @Service
 public class PartnerClient {
@@ -45,6 +49,7 @@ public class PartnerClient {
     private final HttpClient http;
     private final SimulatorProperties properties;
     private final BankKeys bankKeys;
+    private final BankProfiles profiles;
     private final ExchangeLogService exchangeLog;
     private final ChecklistService checklist;
     private final JsonMapper json;
@@ -55,18 +60,11 @@ public class PartnerClient {
     record CachedToken(String baseUrl, String clientId, String token, Instant expiresAt) {
     }
 
-    /** One call as it happened; status is null when no HTTP response arrived. */
-    public record Exchange(UUID logId, Integer status, String body, JsonNode json, String error) {
-
-        public String responseCode() {
-            return json == null || json.get("responseCode") == null ? null : json.get("responseCode").asString();
-        }
-    }
-
-    public PartnerClient(SimulatorProperties properties, BankKeys bankKeys, ExchangeLogService exchangeLog,
-            ChecklistService checklist, JsonMapper json, Clock clock) {
+    public PartnerClient(SimulatorProperties properties, BankKeys bankKeys, BankProfiles profiles,
+            ExchangeLogService exchangeLog, ChecklistService checklist, JsonMapper json, Clock clock) {
         this.properties = properties;
         this.bankKeys = bankKeys;
+        this.profiles = profiles;
         this.exchangeLog = exchangeLog;
         this.checklist = checklist;
         this.json = json;
@@ -80,17 +78,17 @@ public class PartnerClient {
     @SpecRef("aspi.oauth.token-b2b-outbound#request.grantType")
     @SpecRef("aspi.oauth.token-b2b-outbound#response.accessToken")
     @SpecRef("aspi.oauth.token-b2b-outbound#response.expiresIn")
-    public Exchange requestToken(Partner partner) {
+    public OutboundExchange requestToken(BankConnection partner) {
         requireEndpoint(partner);
         tokens.remove(partner.getId());
-        String timestamp = SnapTimestamp.format(clock.instant());
+        String timestamp = profiles.of(partner.getBank()).timestamp(clock.instant());
         String stringToSign = SnapSignature.asymmetricStringToSign(partner.getEndpointClientId(), timestamp);
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json");
         headers.put("X-CLIENT-KEY", partner.getEndpointClientId());
         headers.put("X-TIMESTAMP", timestamp);
-        headers.put("X-SIGNATURE", SnapSignature.signRsa(bankKeys.privateKey(), stringToSign));
-        Exchange exchange = send(partner, partner.getEndpointBaseUrl() + TOKEN_PATH, headers,
+        headers.put("X-SIGNATURE", SnapSignature.signRsa(bankKeys.of(partner.getBank()).privateKey(), stringToSign));
+        OutboundExchange exchange = send(partner, partner.getEndpointBaseUrl() + TOKEN_PATH, headers,
                 "{\"grantType\":\"client_credentials\"}", stringToSign);
         if (exchange.status() == null || exchange.status() != 200 || exchange.json() == null
                 || exchange.json().get("accessToken") == null || exchange.json().get("accessToken").asString().isBlank()) {
@@ -104,32 +102,34 @@ public class PartnerClient {
     }
 
     /** A token from the cache, or a new one. */
-    public String token(Partner partner) {
+    public String token(BankConnection partner) {
         CachedToken cached = tokens.get(partner.getId());
         if (cached != null && cached.expiresAt().isAfter(clock.instant())
                 && cached.baseUrl().equals(partner.getEndpointBaseUrl())
                 && cached.clientId().equals(partner.getEndpointClientId())) {
             return cached.token();
         }
-        Exchange exchange = requestToken(partner);
+        OutboundExchange exchange = requestToken(partner);
         CachedToken fresh = tokens.get(partner.getId());
         if (fresh == null) {
-            throw new OutboundException("Partner token request failed: " + describe(exchange));
+            throw new OutboundException("Partner token request failed: " + exchange.describe());
         }
         return fresh.token();
     }
 
     /**
-     * HMAC-signed POST to the partner. X-PARTNER-ID is the client id the partner
-     * issued to the bank (A28); corruptSignature sends a wrong signature on purpose.
+     * HMAC-signed POST to the partner. X-PARTNER-ID and CHANNEL-ID follow the
+     * bank profile (A28, A40); corruptSignature sends a wrong signature on purpose.
      */
     @SpecRef("snap.headers.service")
     @SpecRef("snap.sig.symmetric")
-    public Exchange post(Partner partner, String path, String body, String channelId, String externalId,
-            boolean corruptSignature) {
+    @SpecRef("bca.headers.service")
+    public OutboundExchange post(BankConnection partner, String path, String body, ChannelOption channel,
+            String externalId, boolean corruptSignature) {
         requireEndpoint(partner);
         String token = token(partner);
-        String timestamp = SnapTimestamp.format(clock.instant());
+        BankProfile profile = profiles.of(partner.getBank());
+        String timestamp = profile.timestamp(clock.instant());
         String signedPath = URI.create(partner.getEndpointBaseUrl() + path).getRawPath();
         String stringToSign = SnapSignature.symmetricStringToSign("POST", signedPath, token, body, timestamp);
         String signature = SnapSignature.hmac(partner.getEndpointClientSecret(), stringToSign);
@@ -138,10 +138,10 @@ public class PartnerClient {
         headers.put("Authorization", "Bearer " + token);
         headers.put("X-TIMESTAMP", timestamp);
         headers.put("X-SIGNATURE", corruptSignature ? corrupt(signature) : signature);
-        headers.put("X-PARTNER-ID", partner.getEndpointClientId());
-        headers.put("CHANNEL-ID", channelId);
+        headers.put("X-PARTNER-ID", profile.outboundPartnerId(partner));
+        headers.put("CHANNEL-ID", channel.channelIdHeader());
         headers.put("X-EXTERNAL-ID", externalId);
-        Exchange exchange = send(partner, partner.getEndpointBaseUrl() + path, headers, body, stringToSign);
+        OutboundExchange exchange = send(partner, partner.getEndpointBaseUrl() + path, headers, body, stringToSign);
         if (exchange.status() != null && exchange.status() == 401) {
             tokens.remove(partner.getId());
         }
@@ -153,12 +153,12 @@ public class PartnerClient {
         return Randoms.digits(32);
     }
 
-    private Exchange send(Partner partner, String url, Map<String, String> headers, String body, String stringToSign) {
+    private OutboundExchange send(BankConnection partner, String url, Map<String, String> headers, String body, String stringToSign) {
         Instant started = clock.instant();
         long startNanos = System.nanoTime();
         ExchangeLog entry = new ExchangeLog();
         entry.setCreatedAt(started);
-        entry.setPartnerId(partner.getId());
+        entry.setConnectionId(partner.getId());
         entry.setDirection(Direction.OUTBOUND);
         entry.setMethod("POST");
         entry.setUrl(url);
@@ -192,7 +192,7 @@ public class PartnerClient {
         entry.setError(error);
         entry.setDurationMs((System.nanoTime() - startNanos) / 1_000_000);
         exchangeLog.record(entry);
-        return new Exchange(entry.getId(), status, responseBody, parse(responseBody), error);
+        return new OutboundExchange(entry.getId(), status, responseBody, parse(responseBody), error);
     }
 
     private JsonNode parse(String body) {
@@ -218,17 +218,10 @@ public class PartnerClient {
         }
     }
 
-    private static void requireEndpoint(Partner partner) {
+    private static void requireEndpoint(BankConnection partner) {
         if (!partner.hasEndpoint()) {
             throw new OutboundException("No partner endpoint registered: set it on the portal Endpoint page");
         }
-    }
-
-    public static String describe(Exchange exchange) {
-        if (exchange.error() != null) {
-            return exchange.error();
-        }
-        return "HTTP " + exchange.status() + (exchange.responseCode() == null ? "" : " responseCode " + exchange.responseCode());
     }
 
     private static String corrupt(String signature) {

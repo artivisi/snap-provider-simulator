@@ -2,6 +2,7 @@ package com.artivisi.snapsimulator.functional;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.config.BankKeys;
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.support.FakePartnerApp;
 import com.artivisi.snapsimulator.support.SnapTestClient;
 import com.microsoft.playwright.Download;
@@ -27,14 +28,10 @@ class WorkspaceFunctionalTest extends PlaywrightTestBase {
 
     @BeforeEach
     void setUp() throws Exception {
-        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.publicKey());
+        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.of(Bank.BRI).publicKey());
         partner = signupWithKey(false, 300);
-        page.navigate("/portal/login");
-        page.locator("#email").fill(partner.email());
-        page.locator("#password").fill(partner.password());
-        page.locator("#login-submit").click();
-        assertThat(page.locator("#partner-email")).hasText(partner.email());
-        page.locator("#nav-endpoint").click();
+        portalLogin(partner);
+        openConnection(partner, "/endpoint");
         page.locator("#baseUrl").fill(app.baseUrl());
         page.locator("#clientId").fill("bank-id");
         page.locator("#clientSecret").fill("bank-secret");
@@ -130,14 +127,14 @@ class WorkspaceFunctionalTest extends PlaywrightTestBase {
         page.locator("#injection-delay").fill("100");
         page.locator("#injection-remaining").fill("1");
         page.locator("#injection-submit").click();
-        assertThat(page.locator("#flash-error")).containsText("SLOW_RESPONSE applies to ACCESS_TOKEN_B2B");
+        assertThat(page.locator("#flash-error")).containsText("SLOW_RESPONSE applies to BRI_ACCESS_TOKEN");
 
         page.locator("#injection-type").selectOption("HTTP_ERROR");
-        page.locator("#injection-target").selectOption("CREATE_VA");
+        page.locator("#injection-target").selectOption("BRI_CREATE_VA");
         page.locator("#injection-status").selectOption("503");
         page.locator("#injection-remaining").fill("2");
         page.locator("#injection-submit").click();
-        assertThat(page.locator("#flash-message")).hasText("Rule added: HTTP_ERROR on CREATE_VA");
+        assertThat(page.locator("#flash-message")).hasText("Rule added: HTTP_ERROR on BRI_CREATE_VA");
         assertThat(page.locator("#rules .rule")).hasCount(1);
         page.locator("button.delete-rule").click();
         assertThat(page.locator("#no-rules")).isVisible();

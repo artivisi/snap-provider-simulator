@@ -1,16 +1,16 @@
 package com.artivisi.snapsimulator.service;
 
 import com.artivisi.snapsimulator.SpecRef;
+import com.artivisi.snapsimulator.bank.BankProfiles;
+import com.artivisi.snapsimulator.bank.ChannelOption;
 import com.artivisi.snapsimulator.dto.SeedRequest;
 import com.artivisi.snapsimulator.dto.SeedResult;
-import com.artivisi.snapsimulator.entity.Partner;
-import com.artivisi.snapsimulator.enums.Channel;
+import com.artivisi.snapsimulator.entity.BankConnection;
 import com.artivisi.snapsimulator.exception.BusinessException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Today's payments with the anomalies a reconciliation must find: a credit
@@ -25,25 +25,23 @@ public class ReconciliationSeeder {
             PaymentService.Scenario.NORMAL, PaymentService.Scenario.DROPPED, PaymentService.Scenario.AMOUNT_MISMATCH,
             PaymentService.Scenario.DUPLICATE);
 
-    private final PartnerService partners;
     private final PaymentService payments;
+    private final BankProfiles profiles;
 
-    public ReconciliationSeeder(PartnerService partners, PaymentService payments) {
-        this.partners = partners;
+    public ReconciliationSeeder(PaymentService payments, BankProfiles profiles) {
         this.payments = payments;
+        this.profiles = profiles;
     }
 
-    public List<SeedResult> seed(UUID partnerId, SeedRequest request) {
-        Partner partner = partners.get(partnerId);
-        if (!partner.hasEndpoint()) {
+    public List<SeedResult> seed(BankConnection connection, SeedRequest request) {
+        if (!connection.hasEndpoint()) {
             throw new BusinessException(null, "Register the partner endpoint first: the seeder sends inquiries and payments to it");
         }
-        Channel channel = Channel.of(request.channelId())
-                .orElseThrow(() -> new BusinessException("channelId", "Unknown channel " + request.channelId()));
+        ChannelOption channel = profiles.of(connection.getBank()).channel(request.channelId());
         List<SeedResult> results = new ArrayList<>();
         for (int i = 0; i < ORDER.size(); i++) {
             String va = request.virtualAccountNos().get(i);
-            results.add(new SeedResult(ORDER.get(i), va, payments.billerFlow(partner, va, null, channel, ORDER.get(i))));
+            results.add(new SeedResult(ORDER.get(i), va, payments.billerFlow(connection, va, null, channel, ORDER.get(i))));
         }
         return results;
     }

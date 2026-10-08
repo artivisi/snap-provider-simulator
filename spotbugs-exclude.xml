@@ -17,6 +17,7 @@ not a defect in this application. Add one only after the code is right.
             <Class name="~com\.artivisi\.snapsimulator\.service\.[A-Za-z]+"/>
             <Class name="~com\.artivisi\.snapsimulator\.controller(\.api|\.snap)?\.[A-Za-z]+Controller"/>
             <Class name="com.artivisi.snapsimulator.controller.snap.SnapInboundFilter"/>
+            <Class name="~com\.artivisi\.snapsimulator\.bank\.[A-Za-z]+Profile"/>
         </Or>
     </Match>
 

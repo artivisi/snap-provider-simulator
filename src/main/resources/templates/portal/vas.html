@@ -3,6 +3,7 @@
 <head><title>Virtual accounts · SNAP Provider Simulator</title></head>
 <body>
 <main>
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
     <h1>Bank-hosted virtual accounts</h1>
     <p>VAs your app created with <code>create-va</code>. "Pay" simulates a customer paying the VA at a bank channel:
         the bank credits its ledger and, if your endpoint is registered, sends the payment call with the VA's
@@ -20,10 +21,10 @@
             <td th:text="${va.expiredDate != null} ? ${#temporals.format(va.expiredDate, 'yyyy-MM-dd HH:mm')} : '-'"></td>
             <td><span class="badge va-status" th:classappend="${va.status.name() == 'PAID'} ? 'done'" th:text="${va.status}"></span></td>
             <td>
-                <form th:if="${va.status.name() == 'ACTIVE'}" th:action="@{/portal/vas/pay}" method="post" class="inline">
+                <form th:if="${va.status.name() == 'ACTIVE'}" th:action="@{/portal/c/{id}/vas/pay(id=${conn.id})}" method="post" class="inline">
                     <input type="hidden" name="virtualAccountNo" th:value="${va.virtualAccountNo}">
                     <select name="channelId" class="channel" required>
-                        <option th:each="c : ${channels}" th:value="${c.id()}" th:text="|${c.id()} ${c.label()}|"></option>
+                        <option th:each="c : ${channels}" th:value="${c.code()}" th:text="|${c.code()} ${c.label()}|"></option>
                     </select>
                     <button type="submit" class="secondary pay">Pay</button>
                 </form>

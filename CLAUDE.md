@@ -1,7 +1,9 @@
 # CLAUDE.md — SNAP Provider Simulator
 
-Local simulator of BRI's SNAP (Standar Nasional Open API Pembayaran) VA side,
-for developing and testing partner apps against SNAP without a bank sandbox.
+Local simulator of the bank side of SNAP (Standar Nasional Open API Pembayaran)
+virtual accounts for two banks, BRI and BCA, for developing and testing partner
+apps without a bank sandbox. One account = one partner app; it adds a bank
+connection per bank (own credentials, key, endpoint, settings, checklist, data).
 Public repo, Apache 2.0. README.md: capabilities, run, configuration, onboarding.
 Status: in development toward 2026.10-RELEASE.
 Plan: `docs/implementation-plan.md`.
@@ -20,10 +22,15 @@ context (why features exist, deadlines, private source locations) lives in
 
 QRIS endpoints in README are out of scope for 2026.10-RELEASE.
 
-## Bank profile: BRI
+## Bank profiles
 
-The simulator emulates **BRI's publicly documented SNAP VA behaviour**,
-covering both VA models (bank-hosted and biller-hosted).
+Everything that differs between banks lives in one `BankProfile` per bank
+(`bank` package). Adding a bank = a profile + its `<bank>.*` spec-index items.
+
+### BRI
+
+**BRI's publicly documented SNAP VA behaviour**, covering both VA models
+(bank-hosted and biller-hosted).
 
 Spec content is not ours and is never committed. `docs/sources/` (raw
 Playwright captures; the portals are JS-rendered) and `docs/bri/` (working
@@ -42,12 +49,23 @@ traceability).
 - BRI SNAP bank statement (reference for the statement export):
   https://developers.bri.co.id/en/snap-bi/api-bank-statement-snap-bi
 
-Match BRI's paths, headers, field names, VA number layout and response codes
-as documented. Where BRI is silent or gated, follow the public ASPI standard
-and record the decision as an assumption (A-id) in `docs/spec-index.json`.
-Never use login-gated pages, even if an account becomes available.
+### BCA
 
-## Capabilities (2026.10-RELEASE)
+**BCA's publicly documented "Virtual Account for Biller"** (biller-hosted only:
+inquiry and payment flag to the partner, inquiry status; no create-va in the
+public docs). Source: https://developer.bca.co.id/en/Dokumentasi (sections
+OAuth2.0 (SNAP), Signature (SNAP), Headers (SNAP), Virtual Account for Biller).
+"Transfer to Virtual Account BCA" is the payer side and not used.
+
+### Rules for both
+
+Match each bank's paths, headers, field names, VA number layout and response
+codes as documented. Where a bank is silent or gated, follow the public ASPI
+standard and record the decision as an assumption (A-id) in
+`docs/spec-index.json`. Never use login-gated pages, even if an account
+becomes available.
+
+## Capabilities (2026.10-RELEASE, both banks unless noted)
 
 | Capability | Spec |
 |---|---|
@@ -56,7 +74,8 @@ Never use login-gated pages, even if an account becomes available.
 | B2B access token, SHA256withRSA over `clientId\|timestamp` | BRI OAuth |
 | HMAC-SHA512 signature verification on service calls | BRI OAuth, ASPI security |
 | **Diagnostic mode** (per-partner switch): failed signature checks return the expected string-to-sign and body hashes, never the signature. Real banks don't do this | ours |
-| Bank-hosted VA: create / update / inquiry / delete, inquiry status; configurable token TTL | ASPI VA |
+| Bank-hosted VA: create / update / inquiry / delete, inquiry status; configurable token TTL (BRI only) | ASPI VA |
+| BCA inquiry status at `/openapi/v2.0/transfer-va/status`, returning the partner's payment flag | BCA |
 | **Bank-to-partner calls**: simulator obtains a token from the partner app (signed with the simulator's bank key), then calls the partner's inquiry and payment endpoints; triggered from admin UI/API | BRIVA Online |
 | Resend a payment with the same `X-EXTERNAL-ID` | BRIVA Online |
 | Failure injection: timeout after processing, slow response, HTTP error, invalid signature, late or dropped notification | ours |
@@ -74,9 +93,9 @@ standard; generic SNAP signature code. NOT allowed:
 - Anything derived from non-public bank specs or client-provided documents.
   Only publicly available bank specs are used (NDA safety).
 - Client-owned code, even as a template.
-- BRI documentation text copied verbatim, BRI logos/branding. README/UI must
-  say: simulates BRI's publicly documented SNAP VA behaviour; not affiliated
-  with or endorsed by PT Bank Rakyat Indonesia.
+- Bank documentation text copied verbatim, bank logos/branding. README/UI must
+  say: simulates the publicly documented SNAP VA behaviour of BRI and BCA; not
+  affiliated with or endorsed by PT Bank Rakyat Indonesia or PT Bank Central Asia.
 - Registration-gated documents (e.g. ASPI developer-site PDFs): link only.
 - Sandbox credentials of any real bank.
 

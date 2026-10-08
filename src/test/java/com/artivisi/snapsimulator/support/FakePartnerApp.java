@@ -25,7 +25,6 @@ import java.util.function.Function;
  */
 public class FakePartnerApp implements AutoCloseable {
 
-    public static final String BASE_PATH = "/partner";
     public static final String TOKEN = "partner-issued-token";
 
     public record Received(String path, Map<String, String> headers, JsonNode body, boolean signatureValid) {
@@ -36,6 +35,7 @@ public class FakePartnerApp implements AutoCloseable {
     }
 
     private final HttpServer server;
+    private final String basePath;
     private final String bankClientId;
     private final String bankClientSecret;
     private final PublicKey bankPublicKey;
@@ -45,20 +45,27 @@ public class FakePartnerApp implements AutoCloseable {
     private volatile Function<JsonNode, Answer> paymentAnswer;
 
     public FakePartnerApp(String bankClientId, String bankClientSecret, PublicKey bankPublicKey) throws IOException {
+        this(bankClientId, bankClientSecret, bankPublicKey, "/partner");
+    }
+
+    /** basePath is where the app serves {base}/v1.0/..., e.g. /partner/openapi for a BCA-style app. */
+    public FakePartnerApp(String bankClientId, String bankClientSecret, PublicKey bankPublicKey, String basePath)
+            throws IOException {
+        this.basePath = basePath;
         this.bankClientId = bankClientId;
         this.bankClientSecret = bankClientSecret;
         this.bankPublicKey = bankPublicKey;
         this.inquiryAnswer = body -> new Answer(200, inquirySuccess(body));
         this.paymentAnswer = body -> new Answer(200, paymentReply(body, "2002500", "00"));
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        server.createContext(BASE_PATH + "/v1.0/access-token/b2b", this::token);
-        server.createContext(BASE_PATH + "/v1.0/transfer-va/inquiry", ex -> service(ex, true));
-        server.createContext(BASE_PATH + "/v1.0/transfer-va/payment", ex -> service(ex, false));
+        server.createContext(basePath + "/v1.0/access-token/b2b", this::token);
+        server.createContext(basePath + "/v1.0/transfer-va/inquiry", ex -> service(ex, true));
+        server.createContext(basePath + "/v1.0/transfer-va/payment", ex -> service(ex, false));
         server.start();
     }
 
     public String baseUrl() {
-        return "http://127.0.0.1:" + server.getAddress().getPort() + BASE_PATH;
+        return "http://127.0.0.1:" + server.getAddress().getPort() + basePath;
     }
 
     public List<Received> received() {
@@ -81,7 +88,10 @@ public class FakePartnerApp implements AutoCloseable {
         return """
                 {"responseCode":"2002400","responseMessage":"Successful","virtualAccountData":{
                 "partnerServiceId":"%s","customerNo":"%s","virtualAccountNo":"%s","virtualAccountName":"Siti Aminah",
-                "inquiryRequestId":"%s","totalAmount":{"value":"250000.00","currency":"IDR"},"inquiryStatus":"00"}}"""
+                "inquiryRequestId":"%s","totalAmount":{"value":"250000.00","currency":"IDR"},"inquiryStatus":"00",
+                "inquiryReason":{"english":"Success","indonesia":"Sukses"},"subCompany":"00000",
+                "billDetails":[{"billNo":"B-1","billDescription":{"english":"Tuition","indonesia":"SPP"},
+                "billSubCompany":"00000","billAmount":{"value":"250000.00","currency":"IDR"},"additionalInfo":{}}]}}"""
                 .formatted(request.get("partnerServiceId").asString(), request.get("customerNo").asString(),
                         request.get("virtualAccountNo").asString(), request.get("inquiryRequestId").asString());
     }

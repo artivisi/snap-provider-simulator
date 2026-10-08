@@ -10,6 +10,6 @@ public class BankKeyConfig {
 
     @Bean
     BankKeys bankKeys(SimulatorProperties properties) {
-        return BankKeys.load(Path.of(properties.bank().privateKeyPath()));
+        return BankKeys.load(Path.of(properties.bank().keyDir()));
     }
 }

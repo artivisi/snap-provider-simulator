@@ -53,8 +53,10 @@ class DockerImageTest {
     private static GenericContainer<?> simulator(Map<String, String> env) {
         return new GenericContainer<>(image())
                 .withNetwork(NETWORK)
-                .withCopyFileToContainer(MountableFile.forHostPath("src/test/resources/keys/bank-test-private.pem", 0644),
-                        "/keys/bank-private.pem")
+                .withCopyFileToContainer(MountableFile.forHostPath("src/test/resources/keys/bri-private.pem", 0644),
+                        "/keys/bri-private.pem")
+                .withCopyFileToContainer(MountableFile.forHostPath("src/test/resources/keys/bca-private.pem", 0644),
+                        "/keys/bca-private.pem")
                 .withEnv(env)
                 .withExposedPorts(9090);
     }
@@ -65,7 +67,7 @@ class DockerImageTest {
                 "SIMULATOR_DB_USERNAME", "simulator",
                 "SIMULATOR_DB_PASSWORD", "simulator",
                 "SIMULATOR_TIMESTAMP_SKEW", "5m",
-                "SIMULATOR_BANK_PRIVATE_KEY_PATH", "/keys/bank-private.pem",
+                "SIMULATOR_BANK_KEY_DIR", "/keys",
                 "SIMULATOR_OPERATOR_USERNAME", "operator",
                 "SIMULATOR_OPERATOR_PASSWORD", "operator-password",
                 "SIMULATOR_OUTBOUND_CONNECT_TIMEOUT", "2s",
@@ -105,12 +107,19 @@ class DockerImageTest {
     void signupAndToken() throws Exception {
         HttpResponse<String> signup = send(HttpRequest.newBuilder(URI.create(url("/portal/api/signup")))
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString("{\"email\":\"image@example.test\",\"password\":\"password-1\","
-                        + "\"tokenTtlSeconds\":300,\"diagnosticMode\":false}")).build());
+                .POST(HttpRequest.BodyPublishers.ofString("{\"email\":\"image@example.test\",\"password\":\"password-1\"}"))
+                .build());
         assertThat(signup.statusCode()).isEqualTo(201);
-        String clientId = JSON.readTree(signup.body()).get("clientId").asString();
         String basic = "Basic " + Base64.getEncoder().encodeToString("image@example.test:password-1".getBytes(StandardCharsets.UTF_8));
-        HttpResponse<String> key = send(HttpRequest.newBuilder(URI.create(url("/portal/api/key/generate")))
+        HttpResponse<String> connection = send(HttpRequest.newBuilder(URI.create(url("/portal/api/connections")))
+                .header("Authorization", basic).header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString("{\"bank\":\"BRI\",\"tokenTtlSeconds\":300,\"diagnosticMode\":false}"))
+                .build());
+        assertThat(connection.statusCode()).isEqualTo(201);
+        JsonNode issued = JSON.readTree(connection.body());
+        String clientId = issued.get("clientId").asString();
+        HttpResponse<String> key = send(HttpRequest.newBuilder(URI.create(url("/portal/api/connections/"
+                        + issued.get("connectionId").asString() + "/key/generate")))
                 .header("Authorization", basic).POST(HttpRequest.BodyPublishers.noBody()).build());
         assertThat(key.statusCode()).isEqualTo(200);
         var privateKey = PemKeys.parsePrivateKey(JSON.readTree(key.body()).get("privateKeyPem").asString());
@@ -126,7 +135,7 @@ class DockerImageTest {
         JsonNode body = JSON.readTree(token.body());
         assertThat(body.get("tokenType").asString()).isEqualTo("BearerToken");
 
-        HttpResponse<String> bankKey = send(HttpRequest.newBuilder(URI.create(url("/keys/bank-public.pem"))).GET().build());
+        HttpResponse<String> bankKey = send(HttpRequest.newBuilder(URI.create(url("/keys/bca-public.pem"))).GET().build());
         assertThat(bankKey.body()).startsWith("-----BEGIN PUBLIC KEY-----");
     }
 

@@ -1,6 +1,7 @@
-# Simulator + PostgreSQL. Put the bank private key at ./keys/bank-private.pem first:
-#   mkdir -p keys && openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/bank-private.pem
-#   chmod 644 keys/bank-private.pem    (the container runs as a non-root user)
+# Simulator + PostgreSQL. Create one key per simulated bank in ./keys first:
+#   mkdir -p keys
+#   for b in bri bca; do openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out keys/$b-private.pem; done
+#   chmod 644 keys/*.pem    (the container runs as a non-root user)
 # Then: docker compose up -d   and open http://localhost:9090/portal
 services:
   postgres:
@@ -29,7 +30,7 @@ services:
       SIMULATOR_DB_USERNAME: simulator
       SIMULATOR_DB_PASSWORD: simulator
       SIMULATOR_TIMESTAMP_SKEW: 5m
-      SIMULATOR_BANK_PRIVATE_KEY_PATH: /keys/bank-private.pem
+      SIMULATOR_BANK_KEY_DIR: /keys
       SIMULATOR_OPERATOR_USERNAME: operator
       SIMULATOR_OPERATOR_PASSWORD: change-me
       SIMULATOR_OUTBOUND_CONNECT_TIMEOUT: 5s

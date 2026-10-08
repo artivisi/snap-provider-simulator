@@ -9,12 +9,12 @@ import java.util.UUID;
 
 public interface VirtualAccountRepository extends JpaRepository<VirtualAccount, UUID> {
 
-    Optional<VirtualAccount> findFirstByPartnerIdAndVirtualAccountNoOrderByCreatedAtDesc(UUID partnerId, String virtualAccountNo);
+    Optional<VirtualAccount> findFirstByConnectionIdAndVirtualAccountNoOrderByCreatedAtDesc(UUID connectionId, String virtualAccountNo);
 
-    boolean existsByPartnerIdAndTrxId(UUID partnerId, String trxId);
+    boolean existsByConnectionIdAndTrxId(UUID connectionId, String trxId);
 
-    boolean existsByPartnerIdAndVirtualAccountNoAndStatus(UUID partnerId, String virtualAccountNo,
+    boolean existsByConnectionIdAndVirtualAccountNoAndStatus(UUID connectionId, String virtualAccountNo,
             com.artivisi.snapsimulator.enums.VaStatus status);
 
-    List<VirtualAccount> findByPartnerIdOrderByCreatedAtDesc(UUID partnerId);
+    List<VirtualAccount> findByConnectionIdOrderByCreatedAtDesc(UUID connectionId);
 }

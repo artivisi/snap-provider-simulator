@@ -3,8 +3,9 @@
 <head><title>Settings · SNAP Provider Simulator</title></head>
 <body>
 <main class="narrow">
+    <th:block th:replace="~{fragments/connection-nav :: nav}"></th:block>
     <h1>Settings</h1>
-    <form th:action="@{/portal/settings}" th:object="${form}" method="post" class="stack" id="settings-form">
+    <form th:action="@{/portal/c/{id}/settings(id=${conn.id})}" th:object="${form}" method="post" class="stack" id="settings-form">
         <label>Access token lifetime, seconds (10–86400)
             <input type="number" th:field="*{tokenTtlSeconds}" required min="10" max="86400">
             <span class="field-error" th:if="${#fields.hasErrors('tokenTtlSeconds')}" th:errors="*{tokenTtlSeconds}"></span>

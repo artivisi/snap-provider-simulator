@@ -32,11 +32,12 @@ discipline. Where this document and Balaka differ, this document wins.
 ## Source layout (package-by-layer, as Balaka)
 
 `com.artivisi.snapsimulator.{config, controller, controller.api, controller.snap,
-service, repository, entity, dto, enums, exception, security, snap, util}`
+service, repository, entity, dto, enums, exception, security, snap, bank, util}`
 
 - `controller` (web, Thymeleaf), `controller.api` (portal/admin JSON),
   `controller.snap` (SNAP endpoints); `snap` holds signature, minifier, PEM,
-  response-code logic with no Spring dependency.
+  response-code logic with no Spring dependency; `bank` holds one `BankProfile`
+  per simulated bank (everything that differs between banks).
 - Controllers call services; services call repositories. No entity is bound as
   `@ModelAttribute`: web forms are form DTOs, API bodies are records in `dto`.
 - Services: class-level `@Transactional(readOnly = true)`, `@Transactional` on writes.

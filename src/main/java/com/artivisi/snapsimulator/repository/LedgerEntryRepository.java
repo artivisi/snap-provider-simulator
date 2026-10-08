@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> {
 
-    List<LedgerEntry> findByPartnerIdAndTransactionTimeGreaterThanEqualAndTransactionTimeLessThanOrderByTransactionTime(
-            UUID partnerId, Instant from, Instant to);
+    List<LedgerEntry> findByConnectionIdAndTransactionTimeGreaterThanEqualAndTransactionTimeLessThanOrderByTransactionTime(
+            UUID connectionId, Instant from, Instant to);
 }

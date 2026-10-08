@@ -9,6 +9,6 @@ import java.util.UUID;
 
 public interface AccessTokenRepository extends JpaRepository<AccessToken, UUID> {
 
-    @EntityGraph(attributePaths = "partner")
+    @EntityGraph(attributePaths = {"connection", "connection.partner"})
     Optional<AccessToken> findByToken(String token);
 }

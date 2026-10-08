@@ -2,6 +2,7 @@ package com.artivisi.snapsimulator.functional;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.config.BankKeys;
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.snap.SnapTimestamp;
 import com.artivisi.snapsimulator.support.FakePartnerApp;
 import com.artivisi.snapsimulator.support.SnapTestClient;
@@ -29,9 +30,9 @@ class ReconciliationFunctionalTest extends PlaywrightTestBase {
 
     @BeforeEach
     void setUp() throws Exception {
-        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.publicKey());
+        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.of(Bank.BRI).publicKey());
         partner = signupWithKey(false, 300);
-        api.put("/portal/api/endpoint", json().setData("{\"baseUrl\":\"" + app.baseUrl()
+        api.put(conn(partner, "/endpoint"), json(partner).setData("{\"baseUrl\":\"" + app.baseUrl()
                 + "\",\"clientId\":\"bank-id\",\"clientSecret\":\"bank-secret\"}"));
     }
 
@@ -40,11 +41,7 @@ class ReconciliationFunctionalTest extends PlaywrightTestBase {
         app.close();
     }
 
-    private RequestOptions json() {
-        return basicAuth(partner).setHeader("Content-Type", "application/json");
-    }
-
-    private String va(int n) {
+        private String va(int n) {
         return partner.partnerServiceId() + "70" + n;
     }
 
@@ -57,7 +54,7 @@ class ReconciliationFunctionalTest extends PlaywrightTestBase {
     @SpecRef("sim.statement-csv")
     @DisplayName("Seeder: two normal, one dropped, one amount mismatch, one duplicate; statement has one credit each")
     void seedAndStatement() {
-        APIResponse response = api.post("/portal/api/reconciliation-seed", json().setData("{\"virtualAccountNos\":[\""
+        APIResponse response = api.post(conn(partner, "/reconciliation-seed"), json(partner).setData("{\"virtualAccountNos\":[\""
                 + va(1) + "\",\"" + va(2) + "\",\"" + va(3) + "\",\"" + va(4) + "\",\"" + va(5) + "\"],\"channelId\":\"00002\"}"));
         assertThat(response.status()).as(response.text()).isEqualTo(200);
         JsonNode results = SnapTestClient.json(response);
@@ -76,7 +73,7 @@ class ReconciliationFunctionalTest extends PlaywrightTestBase {
         assertThat(duplicate).hasSize(2);
         assertThat(duplicate.get(0).headers().get("x-external-id")).isNotEqualTo(duplicate.get(1).headers().get("x-external-id"));
 
-        APIResponse statement = api.get("/portal/api/statements/" + today() + ".csv", basicAuth(partner));
+        APIResponse statement = api.get(conn(partner, "/statements/" + today() + ".csv"), basicAuth(partner));
         assertThat(statement.headers().get("content-type")).startsWith("text/csv");
         String[] lines = statement.text().split("\n");
         assertThat(lines[0]).isEqualTo("transaction_date,transaction_id,type,amount,currency,virtual_account_no,remark");
@@ -92,22 +89,22 @@ class ReconciliationFunctionalTest extends PlaywrightTestBase {
     @DisplayName("A reversed payment shows a credit and a debit; another day's statement is empty")
     void reversalAndOtherDay() {
         app.answerPayment(body -> new FakePartnerApp.Answer(200, FakePartnerApp.paymentReply(body, "2002500", "01")));
-        api.post("/portal/api/biller-payments", json().setData("{\"virtualAccountNo\":\"" + va(9)
+        api.post(conn(partner, "/biller-payments"), json(partner).setData("{\"virtualAccountNo\":\"" + va(9)
                 + "\",\"amount\":\"1500.00\",\"channelId\":\"00002\"}"));
-        String csv = api.get("/portal/api/statements/" + today() + ".csv", basicAuth(partner)).text();
+        String csv = api.get(conn(partner, "/statements/" + today() + ".csv"), basicAuth(partner)).text();
         assertThat(csv).contains(",CREDIT,1500.00,IDR,").contains(",DEBIT,1500.00,IDR,").contains("Reversal");
-        String other = api.get("/portal/api/statements/2020-01-01.csv", basicAuth(partner)).text();
+        String other = api.get(conn(partner, "/statements/2020-01-01.csv"), basicAuth(partner)).text();
         assertThat(other).isEqualTo("transaction_date,transaction_id,type,amount,currency,virtual_account_no,remark\n");
     }
 
     @Test
     @DisplayName("Seeder needs a partner endpoint and exactly five VA numbers")
     void seederValidation() {
-        api.delete("/portal/api/endpoint", basicAuth(partner));
+        api.delete(conn(partner, "/endpoint"), basicAuth(partner));
         String five = "{\"virtualAccountNos\":[\"1\",\"2\",\"3\",\"4\",\"5\"],\"channelId\":\"00002\"}";
-        assertThat(api.post("/portal/api/reconciliation-seed", json().setData(five)).text())
+        assertThat(api.post(conn(partner, "/reconciliation-seed"), json(partner).setData(five)).text())
                 .contains("Register the partner endpoint first");
-        APIResponse four = api.post("/portal/api/reconciliation-seed", json().setData(
+        APIResponse four = api.post(conn(partner, "/reconciliation-seed"), json(partner).setData(
                 "{\"virtualAccountNos\":[\"1\",\"2\",\"3\",\"4\"],\"channelId\":\"00002\"}"));
         assertThat(four.status()).isEqualTo(400);
         assertThat(SnapTestClient.json(four).at("/fieldErrors/virtualAccountNos").isMissingNode()).isFalse();

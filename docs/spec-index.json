@@ -72,6 +72,16 @@
       "contentSha256": "8ba0d6313520a155baebfc6e0260d298a957a279446e853ca61c1c9a15ce4a68"
     },
     {
+      "id": "bca-dokumentasi",
+      "publisher": "BCA",
+      "title": "Developer API BCA - Documentation (SNAP sections)",
+      "url": "https://developer.bca.co.id/en/Dokumentasi",
+      "docVersion": null,
+      "access": "public",
+      "captured": "2026-10-08T13:19:29.055Z",
+      "contentSha256": "a690d81d92d37da276a7d85eef6c7df579eaeda37eb4a36d89280b451503fa8d"
+    },
+    {
       "id": "bri-briva-ws",
       "publisher": "BRI",
       "title": "BRIVA WS (bank-hosted VA)",
@@ -5496,6 +5506,1445 @@
       ]
     },
     {
+      "id": "bca.headers.service",
+      "kind": "header-set",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "request": [
+        {
+          "name": "Content-Type",
+          "req": "M",
+          "format": "application/json",
+          "length": "16"
+        },
+        {
+          "name": "Authorization",
+          "req": "M",
+          "format": "Bearer {token}",
+          "length": null
+        },
+        {
+          "name": "X-TIMESTAMP",
+          "req": "M",
+          "format": "yyyy-MM-ddTHH:mm:ssTZD",
+          "length": "25"
+        },
+        {
+          "name": "X-SIGNATURE",
+          "req": "M",
+          "format": "Base64(HMAC_SHA512)",
+          "length": null
+        },
+        {
+          "name": "X-PARTNER-ID",
+          "req": "M",
+          "format": "company code VA",
+          "length": "8"
+        },
+        {
+          "name": "CHANNEL-ID",
+          "req": "M",
+          "format": "95231 (WSID BCA Virtual Account)",
+          "length": "5"
+        },
+        {
+          "name": "X-EXTERNAL-ID",
+          "req": "M",
+          "format": "Numeric",
+          "length": "36"
+        },
+        {
+          "name": "ORIGIN",
+          "req": "O",
+          "format": "String",
+          "length": null
+        }
+      ],
+      "assumptions": [
+        "A35",
+        "A36",
+        "A40"
+      ]
+    },
+    {
+      "id": "bca.sig.relative-url",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "formula": "RelativeUrl = path + query string, URI-encoded (RFC 3986 unreserved kept), parameters sorted by name then value",
+      "values": {
+        "emptyPath": "/"
+      },
+      "assumptions": [
+        "A37"
+      ]
+    },
+    {
+      "id": "bca.va.number-layout",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "formula": "virtualAccountNo = partnerServiceId (8, left-padded with spaces) + customerNo",
+      "values": {
+        "partnerServiceId": "8",
+        "customerNo": "18",
+        "virtualAccountNo": "26"
+      },
+      "assumptions": [
+        "A48"
+      ]
+    },
+    {
+      "id": "bca.oauth.token-b2b",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/openapi/v1.0/access-token/b2b",
+      "serviceCode": "73",
+      "headers": "snap.headers.token",
+      "request": [
+        {
+          "name": "grantType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "client_credentials"
+          ]
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7",
+          "values": [
+            "2007300"
+          ]
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "accessToken",
+          "type": "String",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "tokenType",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "bearer"
+          ]
+        },
+        {
+          "name": "expiresIn",
+          "type": "String",
+          "req": "M",
+          "length": null,
+          "values": [
+            "900"
+          ]
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2007300",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "4007300",
+          "http": 400,
+          "case": "00",
+          "message": "Invalid field format [clientId/clientSecret/grantType]"
+        },
+        {
+          "code": "4007301",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid field format [X-TIMESTAMP]"
+        },
+        {
+          "code": "4007302",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid mandatory field [X-CLIENT-KEY]"
+        },
+        {
+          "code": "4017300",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [Signature] / [Unknown client]"
+        },
+        {
+          "code": "5047300",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "assumptions": [
+        "A38"
+      ]
+    },
+    {
+      "id": "bca.va.inquiry",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "direction": "bank-to-partner",
+      "method": "POST",
+      "path": "/v1.0/transfer-va/inquiry",
+      "serviceCode": "24",
+      "headers": "bca.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "trxDateInit",
+          "type": "Date",
+          "req": "M",
+          "length": "25"
+        },
+        {
+          "name": "channelCode",
+          "type": "Numeric",
+          "req": "M",
+          "length": "4"
+        },
+        {
+          "name": "language",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "amount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "amount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "amount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "hashedSourceAccountNo",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "sourceBankCode",
+          "type": "String",
+          "req": "O",
+          "length": "3"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "passApp",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30",
+          "conflicts": [
+            {
+              "source": "bca-dokumentasi",
+              "value": "128 (first table row)"
+            }
+          ]
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.inquiryStatus",
+          "type": "String",
+          "req": "M",
+          "length": "2",
+          "values": [
+            "00",
+            "01"
+          ]
+        },
+        {
+          "name": "virtualAccountData.inquiryReason",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.inquiryReason.english",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.inquiryReason.indonesia",
+          "type": "String",
+          "req": "M",
+          "length": "64"
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "virtualAccountData.totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.subCompany",
+          "type": "String",
+          "req": "C",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "C",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.english",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billSubCompany",
+          "type": "String",
+          "req": "M",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002400",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "2022400",
+          "http": 202,
+          "case": "00",
+          "message": "Request in Progress"
+        },
+        {
+          "code": "4002400",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002401",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002402",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012400",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4012401",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4042412",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4042414",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill"
+        },
+        {
+          "code": "4042419",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account"
+        },
+        {
+          "code": "4092400",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        }
+      ],
+      "conflicts": [
+        {
+          "source": "bca-dokumentasi",
+          "field": "path",
+          "value": "https://copartners.com/openapi/v1.0/transfer-va/inquiry (sample)"
+        }
+      ],
+      "assumptions": [
+        "A35",
+        "A39",
+        "A40",
+        "A41",
+        "A42",
+        "A44",
+        "A47"
+      ]
+    },
+    {
+      "id": "bca.va.payment",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "direction": "bank-to-partner",
+      "method": "POST",
+      "path": "/v1.0/transfer-va/payment",
+      "serviceCode": "25",
+      "headers": "bca.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountEmail",
+          "type": "String",
+          "req": "O",
+          "length": "255"
+        },
+        {
+          "name": "virtualAccountPhone",
+          "type": "String",
+          "req": "O",
+          "length": "30"
+        },
+        {
+          "name": "trxId",
+          "type": "String",
+          "req": "O",
+          "length": "64"
+        },
+        {
+          "name": "paymentRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "channelCode",
+          "type": "Numeric",
+          "req": "M",
+          "length": "4"
+        },
+        {
+          "name": "hashedSourceAccountNo",
+          "type": "String",
+          "req": "O",
+          "length": "32"
+        },
+        {
+          "name": "sourceBankCode",
+          "type": "String",
+          "req": "O",
+          "length": "3"
+        },
+        {
+          "name": "paidAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "cumulativePaymentAmount",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "paidBills",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "totalAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "totalAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "totalAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "trxDateTime",
+          "type": "Date",
+          "req": "M",
+          "length": "25"
+        },
+        {
+          "name": "referenceNo",
+          "type": "String",
+          "req": "C",
+          "length": "11"
+        },
+        {
+          "name": "journalNum",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "paymentType",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "flagAdvise",
+          "type": "String",
+          "req": "M",
+          "length": "1",
+          "values": [
+            "N",
+            "Y"
+          ]
+        },
+        {
+          "name": "subCompany",
+          "type": "String",
+          "req": "C",
+          "length": "5"
+        },
+        {
+          "name": "billDetails[]",
+          "type": "Array of Objects",
+          "req": "C",
+          "length": "5"
+        },
+        {
+          "name": "billDetails[].billCode",
+          "type": "String",
+          "req": "O",
+          "length": "2"
+        },
+        {
+          "name": "billDetails[].billNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billName",
+          "type": "String",
+          "req": "O",
+          "length": "20"
+        },
+        {
+          "name": "billDetails[].billShortName",
+          "type": "String",
+          "req": "O",
+          "length": "10"
+        },
+        {
+          "name": "billDetails[].billDescription",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billDescription.english",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billDescription.indonesia",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "billDetails[].billSubCompany",
+          "type": "String",
+          "req": "M",
+          "length": "5"
+        },
+        {
+          "name": "billDetails[].billAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "billDetails[].billAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "billDetails[].additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "billDetails[].billReferenceNo",
+          "type": "String",
+          "req": "M",
+          "length": "11"
+        },
+        {
+          "name": "freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": null
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.english",
+          "type": "String",
+          "req": "M",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason.indonesia",
+          "type": "String",
+          "req": "M",
+          "length": "200"
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountName",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.paymentRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.paidAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.trxDateTime",
+          "type": "Date",
+          "req": "M",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.referenceNo",
+          "type": "String",
+          "req": "C",
+          "length": "11"
+        },
+        {
+          "name": "virtualAccountData.paymentFlagStatus",
+          "type": "String",
+          "req": "M",
+          "length": "2",
+          "values": [
+            "00",
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "C",
+          "length": "5"
+        },
+        {
+          "name": "virtualAccountData.billDetails[].status",
+          "type": "String",
+          "req": "M",
+          "length": "2"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "9"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002500",
+          "http": 200,
+          "case": "00",
+          "message": "Successful"
+        },
+        {
+          "code": "2022500",
+          "http": 202,
+          "case": "00",
+          "message": "Request In Progress"
+        },
+        {
+          "code": "4002500",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002501",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002502",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012500",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [reason]"
+        },
+        {
+          "code": "4012501",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid Token (B2B)"
+        },
+        {
+          "code": "4042512",
+          "http": 404,
+          "case": "12",
+          "message": "Invalid Bill/Virtual Account [Reason]"
+        },
+        {
+          "code": "4042513",
+          "http": 404,
+          "case": "13",
+          "message": "Invalid amount"
+        },
+        {
+          "code": "4042514",
+          "http": 404,
+          "case": "14",
+          "message": "Paid Bill"
+        },
+        {
+          "code": "4042518",
+          "http": 404,
+          "case": "18",
+          "message": "Inconsistent Request"
+        },
+        {
+          "code": "4042519",
+          "http": 404,
+          "case": "19",
+          "message": "Invalid Bill/Virtual Account"
+        },
+        {
+          "code": "4092500",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        }
+      ],
+      "assumptions": [
+        "A35",
+        "A39",
+        "A40",
+        "A41",
+        "A43",
+        "A44",
+        "A45"
+      ]
+    },
+    {
+      "id": "bca.va.inquiry-status",
+      "kind": "endpoint",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "direction": "partner-to-bank",
+      "method": "POST",
+      "path": "/openapi/v2.0/transfer-va/status",
+      "serviceCode": "26",
+      "headers": "bca.headers.service",
+      "request": [
+        {
+          "name": "partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "response": [
+        {
+          "name": "responseCode",
+          "type": "String",
+          "req": "M",
+          "length": "7"
+        },
+        {
+          "name": "responseMessage",
+          "type": "String",
+          "req": "M",
+          "length": "150"
+        },
+        {
+          "name": "virtualAccountData",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paymentFlagStatus",
+          "type": "String",
+          "req": "M",
+          "length": "2",
+          "values": [
+            "00",
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "virtualAccountData.paymentFlagReason",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.partnerServiceId",
+          "type": "String",
+          "req": "M",
+          "length": "8"
+        },
+        {
+          "name": "virtualAccountData.customerNo",
+          "type": "String",
+          "req": "M",
+          "length": "18"
+        },
+        {
+          "name": "virtualAccountData.virtualAccountNo",
+          "type": "String",
+          "req": "M",
+          "length": "26"
+        },
+        {
+          "name": "virtualAccountData.inquiryRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.paymentRequestId",
+          "type": "String",
+          "req": "M",
+          "length": "30"
+        },
+        {
+          "name": "virtualAccountData.paidAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.paidAmount.value",
+          "type": "String",
+          "req": "M",
+          "length": "13.2"
+        },
+        {
+          "name": "virtualAccountData.paidAmount.currency",
+          "type": "String",
+          "req": "M",
+          "length": "3"
+        },
+        {
+          "name": "virtualAccountData.paidBills",
+          "type": "String",
+          "req": "O",
+          "length": "6"
+        },
+        {
+          "name": "virtualAccountData.totalAmount",
+          "type": "Object",
+          "req": "M",
+          "length": null
+        },
+        {
+          "name": "virtualAccountData.trxDateTime",
+          "type": "Date",
+          "req": "O",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.transactionDate",
+          "type": "Date",
+          "req": "M",
+          "length": "25"
+        },
+        {
+          "name": "virtualAccountData.referenceNo",
+          "type": "String",
+          "req": "C",
+          "length": "11"
+        },
+        {
+          "name": "virtualAccountData.paymentType",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData.flagAdvise",
+          "type": "String",
+          "req": "O",
+          "length": "1"
+        },
+        {
+          "name": "virtualAccountData.billDetails[]",
+          "type": "Array of Objects",
+          "req": "C",
+          "length": "24"
+        },
+        {
+          "name": "virtualAccountData.freeTexts[]",
+          "type": "Array of Objects",
+          "req": "O",
+          "length": "9"
+        },
+        {
+          "name": "virtualAccountData.additionalInfo",
+          "type": "Object",
+          "req": "O",
+          "length": null
+        }
+      ],
+      "responseCodes": [
+        {
+          "code": "2002600",
+          "http": 200,
+          "case": "00",
+          "message": "Success"
+        },
+        {
+          "code": "4002600",
+          "http": 400,
+          "case": "00",
+          "message": "Bad Request"
+        },
+        {
+          "code": "4002601",
+          "http": 400,
+          "case": "01",
+          "message": "Invalid Field Format {field name}"
+        },
+        {
+          "code": "4002602",
+          "http": 400,
+          "case": "02",
+          "message": "Invalid Mandatory Field {field name}"
+        },
+        {
+          "code": "4012600",
+          "http": 401,
+          "case": "00",
+          "message": "Unauthorized. [Reason]"
+        },
+        {
+          "code": "4012601",
+          "http": 401,
+          "case": "01",
+          "message": "Invalid token (B2B)"
+        },
+        {
+          "code": "4042601",
+          "http": 404,
+          "case": "01",
+          "message": "Transaction Not Found"
+        },
+        {
+          "code": "4092600",
+          "http": 409,
+          "case": "00",
+          "message": "Conflict"
+        },
+        {
+          "code": "5002601",
+          "http": 500,
+          "case": "01",
+          "message": "Internal Server Error"
+        },
+        {
+          "code": "5042600",
+          "http": 504,
+          "case": "00",
+          "message": "Timeout"
+        }
+      ],
+      "assumptions": [
+        "A36",
+        "A46"
+      ]
+    },
+    {
+      "id": "bca.channel-code",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "values": [
+        {
+          "code": "6000",
+          "label": "Others"
+        },
+        {
+          "code": "6010",
+          "label": "Teller"
+        },
+        {
+          "code": "6011",
+          "label": "ATM"
+        },
+        {
+          "code": "6012",
+          "label": "EDC"
+        },
+        {
+          "code": "6013",
+          "label": "Autodebet"
+        },
+        {
+          "code": "6014",
+          "label": "Internet Banking"
+        },
+        {
+          "code": "6015",
+          "label": "Oneklik"
+        },
+        {
+          "code": "6016",
+          "label": "myBCA"
+        },
+        {
+          "code": "6017",
+          "label": "Mobile Banking"
+        },
+        {
+          "code": "6018",
+          "label": "Other Bank"
+        },
+        {
+          "code": "6019",
+          "label": "Cardless"
+        },
+        {
+          "code": "6020",
+          "label": "Shared Biller"
+        }
+      ],
+      "assumptions": [
+        "A40"
+      ]
+    },
+    {
+      "id": "bca.inquiry-status",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "values": [
+        {
+          "code": "00",
+          "label": "Success inquiry"
+        },
+        {
+          "code": "01",
+          "label": "Failed inquiry"
+        }
+      ],
+      "assumptions": [
+        "A42"
+      ]
+    },
+    {
+      "id": "bca.payment-flag-status",
+      "kind": "enum",
+      "scope": "in",
+      "sources": [
+        "bca-dokumentasi"
+      ],
+      "values": [
+        {
+          "code": "00",
+          "label": "Success"
+        },
+        {
+          "code": "01",
+          "label": "Reject by partner"
+        },
+        {
+          "code": "02",
+          "label": "Timeout"
+        }
+      ],
+      "assumptions": [
+        "A43",
+        "A46"
+      ]
+    },
+    {
       "id": "sim.portal.signup",
       "kind": "rule",
       "scope": "in",
@@ -5504,11 +6953,19 @@
       "assumptions": []
     },
     {
+      "id": "sim.portal.connection",
+      "kind": "rule",
+      "scope": "in",
+      "sources": [],
+      "formula": "an account adds one or more bank connections (BRI, BCA); each has its own credentials, key, endpoint, settings, checklist and data",
+      "assumptions": []
+    },
+    {
       "id": "sim.portal.credentials",
       "kind": "rule",
       "scope": "in",
       "sources": [],
-      "formula": "assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret",
+      "formula": "per connection: assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret",
       "assumptions": []
     },
     {
@@ -5572,7 +7029,7 @@
       "kind": "rule",
       "scope": "in",
       "sources": [],
-      "formula": "bank public key served at /keys/bank-public.pem",
+      "formula": "each bank's public key served at /keys/{bri|bca}-public.pem",
       "assumptions": []
     },
     {
@@ -5907,6 +7364,116 @@
         "aspi.va.get-report"
       ],
       "decision": "Bank-hosted VA paths are the ASPI paths under BRI's /snap/v1.0 prefix."
+    },
+    {
+      "id": "A35",
+      "items": [
+        "bca.headers.service",
+        "bca.va.inquiry",
+        "bca.va.payment"
+      ],
+      "decision": "BCA X-TIMESTAMP and body date-times are generated as yyyy-MM-dd'T'HH:mm:ss+07:00 (25 chars); inbound accepts milliseconds too (A5)."
+    },
+    {
+      "id": "A36",
+      "items": [
+        "bca.headers.service",
+        "bca.va.inquiry-status"
+      ],
+      "decision": "Inbound X-PARTNER-ID on BCA services must equal the connection's company code (partnerServiceId without padding), else 400xx01."
+    },
+    {
+      "id": "A37",
+      "items": [
+        "bca.sig.relative-url"
+      ],
+      "decision": "BCA string-to-sign uses path plus sorted query string; the documented VA endpoints carry no query."
+    },
+    {
+      "id": "A38",
+      "items": [
+        "bca.oauth.token-b2b"
+      ],
+      "decision": "BCA token success body is responseCode 2007300, responseMessage Successful, accessToken, tokenType bearer, expiresIn = connection TTL."
+    },
+    {
+      "id": "A39",
+      "items": [
+        "bca.va.inquiry",
+        "bca.va.payment"
+      ],
+      "decision": "BCA obtains its partner token with the B2B flow at {base-url}/v1.0/access-token/b2b (not in BCA's public docs), as A27."
+    },
+    {
+      "id": "A40",
+      "items": [
+        "bca.va.inquiry",
+        "bca.va.payment",
+        "bca.channel-code",
+        "bca.headers.service"
+      ],
+      "decision": "Outbound CHANNEL-ID is 95231, X-PARTNER-ID the company code, channelCode from the BCA list chosen in the payment action, sourceBankCode 014."
+    },
+    {
+      "id": "A41",
+      "items": [
+        "bca.va.inquiry",
+        "bca.va.payment"
+      ],
+      "decision": "inquiryRequestId = paymentRequestId = yyyyMMddHHmmss + 16 random digits (30); referenceNo and each billReferenceNo are 11 random digits."
+    },
+    {
+      "id": "A42",
+      "items": [
+        "bca.va.inquiry",
+        "bca.inquiry-status"
+      ],
+      "decision": "Inquiry succeeds only with responseCode 2002400 or 2022400 and inquiryStatus 00."
+    },
+    {
+      "id": "A43",
+      "items": [
+        "bca.va.payment",
+        "bca.payment-flag-status"
+      ],
+      "decision": "Payment answer: 2002500, 2022500 or 4042518 then flag 00 acknowledges, 01 reverses, other suspends; any other responseCode reverses; no answer suspends."
+    },
+    {
+      "id": "A44",
+      "items": [
+        "bca.va.payment",
+        "bca.va.inquiry"
+      ],
+      "decision": "All bills returned by the inquiry are paid in full; billDetails and subCompany are echoed with a distinct billReferenceNo per bill; choosing bills is not supported."
+    },
+    {
+      "id": "A45",
+      "items": [
+        "bca.va.payment"
+      ],
+      "decision": "Resend uses the same X-EXTERNAL-ID and paymentRequestId with flagAdvise Y."
+    },
+    {
+      "id": "A46",
+      "items": [
+        "bca.va.inquiry-status",
+        "bca.payment-flag-status"
+      ],
+      "decision": "Inquiry status matches by inquiryRequestId and returns the partner's payment flag (00/01/02); unknown or not yet flagged returns 4042601."
+    },
+    {
+      "id": "A47",
+      "items": [
+        "bca.va.inquiry"
+      ],
+      "decision": "Inquiry sends amount null, language empty, empty passApp and hashedSourceAccountNo, additionalInfo {}."
+    },
+    {
+      "id": "A48",
+      "items": [
+        "bca.va.number-layout"
+      ],
+      "decision": "BCA customerNo is 1-18 digits; partnerServiceId space-padded to 8."
     }
   ]
 }

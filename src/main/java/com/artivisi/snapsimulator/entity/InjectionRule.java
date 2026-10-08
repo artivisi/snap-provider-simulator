@@ -19,8 +19,8 @@ import lombok.Setter;
 public class InjectionRule extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id")
-    private Partner partner;
+    @JoinColumn(name = "connection_id")
+    private BankConnection connection;
 
     /** A SnapService name for inbound rules, an OutboundTarget name for outbound ones. */
     private String target;

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface InjectionRuleRepository extends JpaRepository<InjectionRule, UUID> {
 
-    List<InjectionRule> findByPartnerIdOrderByCreatedAt(UUID partnerId);
+    List<InjectionRule> findByConnectionIdOrderByCreatedAt(UUID connectionId);
 
-    Optional<InjectionRule> findByIdAndPartnerId(UUID id, UUID partnerId);
+    Optional<InjectionRule> findByIdAndConnectionId(UUID id, UUID connectionId);
 }

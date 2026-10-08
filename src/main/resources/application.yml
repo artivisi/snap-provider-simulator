@@ -51,7 +51,7 @@ management:
 simulator:
   timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}
   bank:
-    private-key-path: ${SIMULATOR_BANK_PRIVATE_KEY_PATH}
+    key-dir: ${SIMULATOR_BANK_KEY_DIR}
   operator:
     username: ${SIMULATOR_OPERATOR_USERNAME}
     password: ${SIMULATOR_OPERATOR_PASSWORD}

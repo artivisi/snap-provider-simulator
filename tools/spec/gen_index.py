@@ -153,6 +153,8 @@ sources = [
     OrderedDict(id="aspi-va", publisher="ASPI", title="Transfer Kredit - Virtual Account",
                 url="https://apidevportal.aspi-indonesia.or.id/api-services/transfer-kredit/virtual-account",
                 docVersion=None, access="public"),
+    OrderedDict(id="bca-dokumentasi", publisher="BCA", title="Developer API BCA - Documentation (SNAP sections)",
+                url="https://developer.bca.co.id/en/Dokumentasi", docVersion=None, access="public"),
     OrderedDict(id="bri-briva-ws", publisher="BRI", title="BRIVA WS (bank-hosted VA)", url=None,
                 docVersion=None, access="gated", used=False),
     OrderedDict(id="bri-va-status", publisher="BRI", title="VA transaction status", url=None,
@@ -591,10 +593,158 @@ item("sim.statement-csv", "rule", "in", [],
          ("quoting", "RFC 4180"), ("totalRow", False), ("day", "00:00-24:00 Asia/Jakarta"),
      ]))
 
+# ---- BCA: Virtual Account for Biller (biller-hosted only; no create-va in public docs) ----
+BCA = ["bca-dokumentasi"]
+
+item("bca.headers.service", "header-set", "in", BCA,
+     request=[
+         h("Content-Type", "M", "application/json", "16"),
+         h("Authorization", "M", "Bearer {token}", None),
+         h("X-TIMESTAMP", "M", "yyyy-MM-ddTHH:mm:ssTZD", "25"),
+         h("X-SIGNATURE", "M", "Base64(HMAC_SHA512)", None),
+         h("X-PARTNER-ID", "M", "company code VA", "8"),
+         h("CHANNEL-ID", "M", "95231 (WSID BCA Virtual Account)", "5"),
+         h("X-EXTERNAL-ID", "M", "Numeric", "36"),
+         h("ORIGIN", "O", "String", None),
+     ])
+
+item("bca.sig.relative-url", "rule", "in", BCA,
+     formula="RelativeUrl = path + query string, URI-encoded (RFC 3986 unreserved kept), parameters sorted by name then value",
+     values=OrderedDict([("emptyPath", "/")]))
+
+item("bca.va.number-layout", "rule", "in", BCA,
+     formula="virtualAccountNo = partnerServiceId (8, left-padded with spaces) + customerNo",
+     values=OrderedDict([("partnerServiceId", "8"), ("customerNo", "18"), ("virtualAccountNo", "26")]))
+
+bca_token_resp = [f("responseCode", "String", "M", "7", values=["2007300"]),
+                  f("responseMessage", "String", "M", "150"),
+                  f("accessToken", "String", "M", None),
+                  f("tokenType", "String", "M", None, values=["bearer"]),
+                  f("expiresIn", "String", "M", None, values=["900"])]
+item("bca.oauth.token-b2b", "endpoint", "in", BCA,
+     direction="partner-to-bank", method="POST", path="/openapi/v1.0/access-token/b2b", serviceCode="73",
+     headers="snap.headers.token", request=token_req, response=bca_token_resp,
+     responseCodes=[rc(200, "73", "00", "Successful"),
+                    rc(400, "73", "00", "Invalid field format [clientId/clientSecret/grantType]"),
+                    rc(400, "73", "01", "Invalid field format [X-TIMESTAMP]"),
+                    rc(400, "73", "02", "Invalid mandatory field [X-CLIENT-KEY]"),
+                    rc(401, "73", "00", "Unauthorized. [Signature] / [Unknown client]"),
+                    rc(504, "73", "00", "Timeout")])
+
+BCA_ID = [f("partnerServiceId", "String", "M", "8"), f("customerNo", "String", "M", "18"),
+          f("virtualAccountNo", "String", "M", "26")]
+BCA_AMT = "13.2"
+bca_bill = [f("billDetails[]", "Array of Objects", "C", "5"), f("billDetails[].billCode", "String", "O", "2"),
+            f("billDetails[].billNo", "String", "M", "18"), f("billDetails[].billName", "String", "O", "20"),
+            f("billDetails[].billShortName", "String", "O", "10"),
+            f("billDetails[].billDescription", "Object", "M", None),
+            f("billDetails[].billDescription.english", "String", "M", "18"),
+            f("billDetails[].billDescription.indonesia", "String", "M", "18"),
+            f("billDetails[].billSubCompany", "String", "M", "5"),
+            f("billDetails[].billAmount", "Object", "M", None),
+            f("billDetails[].billAmount.value", "String", "M", BCA_AMT),
+            f("billDetails[].billAmount.currency", "String", "M", "3"),
+            f("billDetails[].additionalInfo", "Object", "O", None)]
+bca_inq_req = BCA_ID + [
+    f("trxDateInit", "Date", "M", "25"), f("channelCode", "Numeric", "M", "4"),
+    f("language", "String", "O", "2"), f("amount", "Object", "O", None),
+    f("amount.value", "String", "M", BCA_AMT), f("amount.currency", "String", "M", "3"),
+    f("hashedSourceAccountNo", "String", "O", "32"), f("sourceBankCode", "String", "O", "3"),
+    f("additionalInfo", "Object", "O", None), f("passApp", "String", "O", "64"),
+    f("inquiryRequestId", "String", "M", "30", conflicts=[c("bca-dokumentasi", "128 (first table row)")])]
+bca_inq_resp = [f("responseCode", "String", "M", "7"), f("responseMessage", "String", "M", "150"),
+                f("virtualAccountData", "Object", "M", None)] + vad(
+    [f("inquiryStatus", "String", "M", "2", values=["00", "01"]), f("inquiryReason", "Object", "M", None),
+     f("inquiryReason.english", "String", "M", "64"), f("inquiryReason.indonesia", "String", "M", "64")]
+    + BCA_ID + [f("virtualAccountName", "String", "M", "30"), f("inquiryRequestId", "String", "M", "30"),
+                f("totalAmount", "Object", "M", None), f("totalAmount.value", "String", "M", BCA_AMT),
+                f("totalAmount.currency", "String", "M", "3"), f("subCompany", "String", "C", "5")]
+    + bca_bill + [f("freeTexts[]", "Array of Objects", "O", "5"), f("additionalInfo", "Object", "O", None)]) + [
+    f("additionalInfo", "Object", "O", None)]
+item("bca.va.inquiry", "endpoint", "in", BCA,
+     direction="bank-to-partner", method="POST", path="/v1.0/transfer-va/inquiry", serviceCode="24",
+     headers="bca.headers.service", request=bca_inq_req, response=bca_inq_resp,
+     responseCodes=[rc(200, "24", "00", "Successful"), rc(202, "24", "00", "Request in Progress"),
+                    rc(400, "24", "00", "Bad Request"), rc(400, "24", "01", "Invalid Field Format {field name}"),
+                    rc(400, "24", "02", "Invalid Mandatory Field {field name}"),
+                    rc(401, "24", "00", "Unauthorized. [reason]"), rc(401, "24", "01", "Invalid Token (B2B)"),
+                    rc(404, "24", "12", "Invalid Bill/Virtual Account [Reason]"), rc(404, "24", "14", "Paid Bill"),
+                    rc(404, "24", "19", "Invalid Bill/Virtual Account"), rc(409, "24", "00", "Conflict")],
+     conflicts=[c("bca-dokumentasi", "https://copartners.com/openapi/v1.0/transfer-va/inquiry (sample)", field="path")])
+
+bca_pay_req = BCA_ID + [
+    f("virtualAccountName", "String", "M", "30"), f("virtualAccountEmail", "String", "O", "255"),
+    f("virtualAccountPhone", "String", "O", "30"), f("trxId", "String", "O", "64"),
+    f("paymentRequestId", "String", "M", "30"), f("channelCode", "Numeric", "M", "4"),
+    f("hashedSourceAccountNo", "String", "O", "32"), f("sourceBankCode", "String", "O", "3"),
+    f("paidAmount", "Object", "M", None), f("paidAmount.value", "String", "M", BCA_AMT),
+    f("paidAmount.currency", "String", "M", "3"), f("cumulativePaymentAmount", "Object", "O", None),
+    f("paidBills", "String", "O", "6"), f("totalAmount", "Object", "M", None),
+    f("totalAmount.value", "String", "M", BCA_AMT), f("totalAmount.currency", "String", "M", "3"),
+    f("trxDateTime", "Date", "M", "25"), f("referenceNo", "String", "C", "11"),
+    f("journalNum", "String", "O", "6"), f("paymentType", "String", "O", "1"),
+    f("flagAdvise", "String", "M", "1", values=["N", "Y"]), f("subCompany", "String", "C", "5")] + bca_bill + [
+    f("billDetails[].billReferenceNo", "String", "M", "11"),
+    f("freeTexts[]", "Array of Objects", "O", None), f("additionalInfo", "Object", "O", None)]
+bca_pay_resp = [f("responseCode", "String", "M", "7"), f("responseMessage", "String", "M", "150"),
+                f("virtualAccountData", "Object", "M", None)] + vad(
+    [f("paymentFlagReason", "Object", "M", None), f("paymentFlagReason.english", "String", "M", "200"),
+     f("paymentFlagReason.indonesia", "String", "M", "200")] + BCA_ID + [
+        f("virtualAccountName", "String", "M", "30"), f("paymentRequestId", "String", "M", "30"),
+        f("paidAmount", "Object", "M", None), f("totalAmount", "Object", "M", None),
+        f("trxDateTime", "Date", "M", "25"), f("referenceNo", "String", "C", "11"),
+        f("paymentFlagStatus", "String", "M", "2", values=["00", "01", "02"]),
+        f("billDetails[]", "Array of Objects", "C", "5"), f("billDetails[].status", "String", "M", "2"),
+        f("freeTexts[]", "Array of Objects", "O", "9")]) + [f("additionalInfo", "Object", "O", None)]
+item("bca.va.payment", "endpoint", "in", BCA,
+     direction="bank-to-partner", method="POST", path="/v1.0/transfer-va/payment", serviceCode="25",
+     headers="bca.headers.service", request=bca_pay_req, response=bca_pay_resp,
+     responseCodes=[rc(200, "25", "00", "Successful"), rc(202, "25", "00", "Request In Progress"),
+                    rc(400, "25", "00", "Bad Request"), rc(400, "25", "01", "Invalid Field Format {field name}"),
+                    rc(400, "25", "02", "Invalid Mandatory Field {field name}"),
+                    rc(401, "25", "00", "Unauthorized. [reason]"), rc(401, "25", "01", "Invalid Token (B2B)"),
+                    rc(404, "25", "12", "Invalid Bill/Virtual Account [Reason]"), rc(404, "25", "13", "Invalid amount"),
+                    rc(404, "25", "14", "Paid Bill"), rc(404, "25", "18", "Inconsistent Request"),
+                    rc(404, "25", "19", "Invalid Bill/Virtual Account"), rc(409, "25", "00", "Conflict")])
+
+bca_status_resp = [f("responseCode", "String", "M", "7"), f("responseMessage", "String", "M", "150"),
+                   f("virtualAccountData", "Object", "M", None)] + vad(
+    [f("paymentFlagStatus", "String", "M", "2", values=["00", "01", "02"]),
+     f("paymentFlagReason", "Object", "M", None)] + BCA_ID + [
+        f("inquiryRequestId", "String", "M", "30"), f("paymentRequestId", "String", "M", "30"),
+        f("paidAmount", "Object", "M", None), f("paidAmount.value", "String", "M", BCA_AMT),
+        f("paidAmount.currency", "String", "M", "3"), f("paidBills", "String", "O", "6"),
+        f("totalAmount", "Object", "M", None), f("trxDateTime", "Date", "O", "25"),
+        f("transactionDate", "Date", "M", "25"), f("referenceNo", "String", "C", "11"),
+        f("paymentType", "String", "O", "1"), f("flagAdvise", "String", "O", "1"),
+        f("billDetails[]", "Array of Objects", "C", "24"), f("freeTexts[]", "Array of Objects", "O", "9"),
+        f("additionalInfo", "Object", "O", None)])
+item("bca.va.inquiry-status", "endpoint", "in", BCA,
+     direction="partner-to-bank", method="POST", path="/openapi/v2.0/transfer-va/status", serviceCode="26",
+     headers="bca.headers.service",
+     request=BCA_ID + [f("inquiryRequestId", "String", "M", "30"), f("additionalInfo", "Object", "O", None)],
+     response=bca_status_resp,
+     responseCodes=[rc(200, "26", "00", "Success"), rc(400, "26", "00", "Bad Request"),
+                    rc(400, "26", "01", "Invalid Field Format {field name}"),
+                    rc(400, "26", "02", "Invalid Mandatory Field {field name}"),
+                    rc(401, "26", "00", "Unauthorized. [Reason]"), rc(401, "26", "01", "Invalid token (B2B)"),
+                    rc(404, "26", "01", "Transaction Not Found"), rc(409, "26", "00", "Conflict"),
+                    rc(500, "26", "01", "Internal Server Error"), rc(504, "26", "00", "Timeout")])
+
+item("bca.channel-code", "enum", "in", BCA,
+     values=[ev("6000", "Others"), ev("6010", "Teller"), ev("6011", "ATM"), ev("6012", "EDC"),
+             ev("6013", "Autodebet"), ev("6014", "Internet Banking"), ev("6015", "Oneklik"),
+             ev("6016", "myBCA"), ev("6017", "Mobile Banking"), ev("6018", "Other Bank"),
+             ev("6019", "Cardless"), ev("6020", "Shared Biller")])
+item("bca.inquiry-status", "enum", "in", BCA, values=[ev("00", "Success inquiry"), ev("01", "Failed inquiry")])
+item("bca.payment-flag-status", "enum", "in", BCA,
+     values=[ev("00", "Success"), ev("01", "Reject by partner"), ev("02", "Timeout")])
+
 # ---- simulator capabilities (ours, no upstream source) ----
 SIM = [
     ("sim.portal.signup", "open sign-up with email + password; one account per partner app"),
-    ("sim.portal.credentials", "assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret"),
+    ("sim.portal.connection", "an account adds one or more bank connections (BRI, BCA); each has its own credentials, key, endpoint, settings, checklist and data"),
+    ("sim.portal.credentials", "per connection: assign unique partnerServiceId; issue clientId and clientSecret; secret shown once; regenerate invalidates the old secret"),
     ("sim.portal.key-generate", "generate RSA-2048 key pair; store public key; private key PKCS#8 PEM one-time download, never stored"),
     ("sim.portal.key-upload", "accept X.509 SubjectPublicKeyInfo RSA >= 2048 PEM; reject private keys without storing or logging them; show openssl commands"),
     ("sim.portal.endpoint", "partner base URL + bank client id/secret, all or none; test connection obtains a token from the partner"),
@@ -602,7 +752,7 @@ SIM = [
     ("sim.portal.checklist", "onboarding items stamped with first-success time"),
     ("sim.portal.reset", "delete a partner's data, keep its registration"),
     ("sim.admin.partners", "operator login from env; list partners with checklist; disable, enable, reset, delete"),
-    ("sim.bank-key.publish", "bank public key served at /keys/bank-public.pem"),
+    ("sim.bank-key.publish", "each bank's public key served at /keys/{bri|bca}-public.pem"),
     ("sim.diagnostic-mode", "failed signature checks return expected string-to-sign and body hashes, never the signature; flags hex-looking signatures"),
     ("sim.biller-payment.trigger", "simulate customer payment: token, inquiry, payment to the partner; record ledger credit"),
     ("sim.biller-payment.resend", "resend a payment with the same X-EXTERNAL-ID and body"),
@@ -679,6 +829,32 @@ A = [
     ("A33", ["sim.statement-csv", "snap.external-id"], "Day boundary is 00:00-24:00 Asia/Jakarta."),
     ("A34", VA_IN + ["aspi.va.update-status-va", "aspi.va.get-report"],
      "Bank-hosted VA paths are the ASPI paths under BRI's /snap/v1.0 prefix."),
+    ("A35", ["bca.headers.service", "bca.va.inquiry", "bca.va.payment"],
+     "BCA X-TIMESTAMP and body date-times are generated as yyyy-MM-dd'T'HH:mm:ss+07:00 (25 chars); inbound accepts milliseconds too (A5)."),
+    ("A36", ["bca.headers.service", "bca.va.inquiry-status"],
+     "Inbound X-PARTNER-ID on BCA services must equal the connection's company code (partnerServiceId without padding), else 400xx01."),
+    ("A37", ["bca.sig.relative-url"],
+     "BCA string-to-sign uses path plus sorted query string; the documented VA endpoints carry no query."),
+    ("A38", ["bca.oauth.token-b2b"],
+     "BCA token success body is responseCode 2007300, responseMessage Successful, accessToken, tokenType bearer, expiresIn = connection TTL."),
+    ("A39", ["bca.va.inquiry", "bca.va.payment"],
+     "BCA obtains its partner token with the B2B flow at {base-url}/v1.0/access-token/b2b (not in BCA's public docs), as A27."),
+    ("A40", ["bca.va.inquiry", "bca.va.payment", "bca.channel-code", "bca.headers.service"],
+     "Outbound CHANNEL-ID is 95231, X-PARTNER-ID the company code, channelCode from the BCA list chosen in the payment action, sourceBankCode 014."),
+    ("A41", ["bca.va.inquiry", "bca.va.payment"],
+     "inquiryRequestId = paymentRequestId = yyyyMMddHHmmss + 16 random digits (30); referenceNo and each billReferenceNo are 11 random digits."),
+    ("A42", ["bca.va.inquiry", "bca.inquiry-status"],
+     "Inquiry succeeds only with responseCode 2002400 or 2022400 and inquiryStatus 00."),
+    ("A43", ["bca.va.payment", "bca.payment-flag-status"],
+     "Payment answer: 2002500, 2022500 or 4042518 then flag 00 acknowledges, 01 reverses, other suspends; any other responseCode reverses; no answer suspends."),
+    ("A44", ["bca.va.payment", "bca.va.inquiry"],
+     "All bills returned by the inquiry are paid in full; billDetails and subCompany are echoed with a distinct billReferenceNo per bill; choosing bills is not supported."),
+    ("A45", ["bca.va.payment"], "Resend uses the same X-EXTERNAL-ID and paymentRequestId with flagAdvise Y."),
+    ("A46", ["bca.va.inquiry-status", "bca.payment-flag-status"],
+     "Inquiry status matches by inquiryRequestId and returns the partner's payment flag (00/01/02); unknown or not yet flagged returns 4042601."),
+    ("A47", ["bca.va.inquiry"],
+     "Inquiry sends amount null, language empty, empty passApp and hashedSourceAccountNo, additionalInfo {}."),
+    ("A48", ["bca.va.number-layout"], "BCA customerNo is 1-18 digits; partnerServiceId space-padded to 8."),
 ]
 assumptions = [OrderedDict([("id", a), ("items", its), ("decision", d)]) for a, its, d in A]
 

@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q -B -DskipTests package && \
 
 FROM azul/zulu-openjdk-alpine:25-jre
 LABEL org.opencontainers.image.title="SNAP Provider Simulator" \
-      org.opencontainers.image.description="Simulates BRI's publicly documented SNAP VA behaviour for partner app testing; not affiliated with or endorsed by PT Bank Rakyat Indonesia" \
+      org.opencontainers.image.description="Simulates the publicly documented SNAP VA behaviour of BRI and BCA for partner app testing; not affiliated with or endorsed by either bank" \
       org.opencontainers.image.source="https://github.com/artivisi/snap-provider-simulator" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.vendor="PT Artivisi Intermedia"

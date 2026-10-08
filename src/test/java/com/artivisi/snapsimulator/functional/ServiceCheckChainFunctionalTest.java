@@ -125,7 +125,7 @@ class ServiceCheckChainFunctionalTest extends PlaywrightTestBase {
         headers.put("X-SIGNATURE", "AAAA");
         client.call("POST", PATH, headers, BODY);
 
-        JsonNode logs = SnapTestClient.json(api.get("/portal/api/exchanges?limit=10", basicAuth(partner)));
+        JsonNode logs = SnapTestClient.json(api.get(conn(partner, "/exchanges?limit=10"), basicAuth(partner)));
         JsonNode rejected = logs.get(0);
         assertThat(rejected.get("direction").asString()).isEqualTo("INBOUND");
         assertThat(rejected.get("url").asString()).isEqualTo(PATH);

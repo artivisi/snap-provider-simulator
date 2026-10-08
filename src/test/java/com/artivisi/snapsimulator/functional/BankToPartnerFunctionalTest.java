@@ -2,6 +2,7 @@ package com.artivisi.snapsimulator.functional;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.config.BankKeys;
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.support.FakePartnerApp;
 import com.artivisi.snapsimulator.support.SnapTestClient;
 import com.microsoft.playwright.APIResponse;
@@ -29,7 +30,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
 
     @BeforeEach
     void startApp() throws Exception {
-        app = new FakePartnerApp(BANK_CLIENT_ID, BANK_CLIENT_SECRET, bankKeys.publicKey());
+        app = new FakePartnerApp(BANK_CLIENT_ID, BANK_CLIENT_SECRET, bankKeys.of(Bank.BRI).publicKey());
         partner = signupWithKey(false, 300);
         registerEndpoint(BANK_CLIENT_ID);
     }
@@ -40,7 +41,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     }
 
     private void registerEndpoint(String clientId) {
-        APIResponse response = api.put("/portal/api/endpoint", basicAuth(partner)
+        APIResponse response = api.put(conn(partner, "/endpoint"), basicAuth(partner)
                 .setHeader("Content-Type", "application/json")
                 .setData("{\"baseUrl\":\"" + app.baseUrl() + "\",\"clientId\":\"" + clientId + "\",\"clientSecret\":\""
                         + BANK_CLIENT_SECRET + "\"}"));
@@ -54,7 +55,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     }
 
     private JsonNode billerPayment(String customerNo, String amount) {
-        return post("/portal/api/biller-payments", "{\"virtualAccountNo\":\"" + partner.partnerServiceId() + customerNo
+        return post(conn(partner, "/biller-payments"), "{\"virtualAccountNo\":\"" + partner.partnerServiceId() + customerNo
                 + "\",\"amount\":\"" + amount + "\",\"channelId\":\"00002\"}");
     }
 
@@ -66,7 +67,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     @SpecRef("sim.portal.endpoint")
     @DisplayName("Test connection: the bank's RSA-signed token request is accepted and the checklist is stamped")
     void testConnection() {
-        JsonNode result = post("/portal/api/endpoint/test", "");
+        JsonNode result = post(conn(partner, "/endpoint/test"), "");
         assertThat(result.get("reachable").asBoolean()).isTrue();
         assertThat(result.get("httpStatus").asInt()).isEqualTo(200);
         FakePartnerApp.Received token = app.received("/access-token/b2b").getFirst();
@@ -75,7 +76,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
         assertThat(checklistDone(partner, "ENDPOINT_REACHABLE")).isNotNull();
 
         registerEndpoint("wrong-client");
-        JsonNode refused = post("/portal/api/endpoint/test", "");
+        JsonNode refused = post(conn(partner, "/endpoint/test"), "");
         assertThat(refused.get("reachable").asBoolean()).isFalse();
         assertThat(refused.get("httpStatus").asInt()).isEqualTo(401);
     }
@@ -124,7 +125,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
         assertThat(result.get("inquiryResponseCode").asString()).isEqualTo("4042412");
         assertThat(result.get("paymentId").isNull()).isTrue();
         assertThat(app.received("/payment")).isEmpty();
-        assertThat(SnapTestClient.json(api.get("/portal/api/payments", basicAuth(partner))).size()).isZero();
+        assertThat(SnapTestClient.json(api.get(conn(partner, "/payments"), basicAuth(partner))).size()).isZero();
     }
 
     @Test
@@ -150,7 +151,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     void resend() {
         JsonNode result = billerPayment("21", "75000.00");
         String paymentId = result.get("paymentId").asString();
-        JsonNode resent = post("/portal/api/biller-payments/" + paymentId + "/resend", "");
+        JsonNode resent = post(conn(partner, "/payments/" + paymentId + "/resend"), "");
         assertThat(resent.get("paymentResponseCode").asString()).isEqualTo("4092500");
         assertThat(resent.get("message").asString()).contains("Resent with X-EXTERNAL-ID");
 
@@ -175,7 +176,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
                  "trxId":"BH-1","totalAmount":{"value":"120000.00","currency":"IDR"}}""".formatted(partner.partnerServiceId(), va);
         assertCode(client.call("POST", "/snap/v1.0/transfer-va/create-va", token, create), "2002700", "Successful");
 
-        JsonNode paid = post("/portal/api/va-payments", "{\"virtualAccountNo\":\"" + va + "\",\"channelId\":\"00003\"}");
+        JsonNode paid = post(conn(partner, "/va-payments"), "{\"virtualAccountNo\":\"" + va + "\",\"channelId\":\"00003\"}");
         assertThat(paid.get("notificationStatus").asString()).isEqualTo("ACKNOWLEDGED");
         FakePartnerApp.Received notification = app.received("/payment").getFirst();
         assertThat(notification.body().get("trxId").asString()).isEqualTo("BH-1");
@@ -195,7 +196,7 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
         assertCode(client.call("PUT", "/snap/v1.0/transfer-va/update-va", token, update), "4042814", "Paid Bill");
         assertCode(client.call("DELETE", "/snap/v1.0/transfer-va/delete-va", token, update), "4043114", "Paid Bill");
 
-        APIResponse again = api.post("/portal/api/va-payments", basicAuth(partner).setHeader("Content-Type", "application/json")
+        APIResponse again = api.post(conn(partner, "/va-payments"), basicAuth(partner).setHeader("Content-Type", "application/json")
                 .setData("{\"virtualAccountNo\":\"" + va + "\",\"channelId\":\"00003\"}"));
         assertThat(again.status()).isEqualTo(400);
         assertThat(again.text()).contains("already paid");
@@ -204,18 +205,18 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     @Test
     @DisplayName("Without a partner endpoint, a bank-hosted payment is recorded and not notified")
     void payWithoutEndpoint() {
-        assertThat(api.delete("/portal/api/endpoint", basicAuth(partner)).status()).isEqualTo(204);
+        assertThat(api.delete(conn(partner, "/endpoint"), basicAuth(partner)).status()).isEqualTo(204);
         SnapTestClient client = snapClient(partner);
         String token = client.obtainToken();
         String va = partner.partnerServiceId() + "600";
         client.call("POST", "/snap/v1.0/transfer-va/create-va", token, """
                 {"partnerServiceId":"%s","customerNo":"600","virtualAccountNo":"%s","virtualAccountName":"Rina",
                  "trxId":"NE-1","totalAmount":{"value":"5000.00","currency":"IDR"}}""".formatted(partner.partnerServiceId(), va));
-        JsonNode paid = post("/portal/api/va-payments", "{\"virtualAccountNo\":\"" + va + "\",\"channelId\":\"00001\"}");
+        JsonNode paid = post(conn(partner, "/va-payments"), "{\"virtualAccountNo\":\"" + va + "\",\"channelId\":\"00001\"}");
         assertThat(paid.get("notificationStatus").asString()).isEqualTo("NOT_NOTIFIED");
         assertThat(app.received()).isEmpty();
 
-        APIResponse biller = api.post("/portal/api/biller-payments", basicAuth(partner).setHeader("Content-Type", "application/json")
+        APIResponse biller = api.post(conn(partner, "/biller-payments"), basicAuth(partner).setHeader("Content-Type", "application/json")
                 .setData("{\"virtualAccountNo\":\"" + partner.partnerServiceId() + "1\",\"amount\":\"1.00\",\"channelId\":\"00001\"}"));
         assertThat(SnapTestClient.json(biller).get("message").asString()).contains("No partner endpoint registered");
     }
@@ -224,14 +225,14 @@ class BankToPartnerFunctionalTest extends PlaywrightTestBase {
     @DisplayName("Biller payment input is validated: VA prefix, channel list, amount format")
     void billerValidation() {
         RequestOptions base = basicAuth(partner).setHeader("Content-Type", "application/json");
-        APIResponse wrongPrefix = api.post("/portal/api/biller-payments", base.setData(
+        APIResponse wrongPrefix = api.post(conn(partner, "/biller-payments"), base.setData(
                 "{\"virtualAccountNo\":\"   99999123\",\"amount\":\"1.00\",\"channelId\":\"00001\"}"));
         assertThat(wrongPrefix.status()).isEqualTo(400);
         assertThat(wrongPrefix.text()).contains("partnerServiceId");
-        APIResponse badChannel = api.post("/portal/api/biller-payments", basicAuth(partner).setHeader("Content-Type", "application/json")
+        APIResponse badChannel = api.post(conn(partner, "/biller-payments"), basicAuth(partner).setHeader("Content-Type", "application/json")
                 .setData("{\"virtualAccountNo\":\"" + partner.partnerServiceId() + "1\",\"amount\":\"1.00\",\"channelId\":\"12345\"}"));
         assertThat(badChannel.text()).contains("Unknown channel 12345");
-        APIResponse badAmount = api.post("/portal/api/biller-payments", basicAuth(partner).setHeader("Content-Type", "application/json")
+        APIResponse badAmount = api.post(conn(partner, "/biller-payments"), basicAuth(partner).setHeader("Content-Type", "application/json")
                 .setData("{\"virtualAccountNo\":\"" + partner.partnerServiceId() + "1\",\"amount\":\"1\",\"channelId\":\"00001\"}"));
         assertThat(SnapTestClient.json(badAmount).at("/fieldErrors/amount").asString()).contains("2 places");
     }

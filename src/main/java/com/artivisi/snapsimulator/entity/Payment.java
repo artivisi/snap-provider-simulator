@@ -24,8 +24,8 @@ import java.time.Instant;
 public class Payment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "partner_id")
-    private Partner partner;
+    @JoinColumn(name = "connection_id")
+    private BankConnection connection;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "virtual_account_id")
@@ -46,6 +46,8 @@ public class Payment extends BaseEntity {
     private BigDecimal notifiedAmount;
     @Enumerated(EnumType.STRING)
     private NotificationStatus notificationStatus;
+    /** Payment auth code sent to the partner (BCA referenceNo); null for BRI. */
+    private String referenceNo;
     /** Body of the payment call, kept so a resend sends exactly the same bytes. */
     private String notificationBody;
     private Instant paidAt;

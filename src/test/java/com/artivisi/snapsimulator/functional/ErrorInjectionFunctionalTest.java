@@ -2,6 +2,7 @@ package com.artivisi.snapsimulator.functional;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.config.BankKeys;
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.support.FakePartnerApp;
 import com.artivisi.snapsimulator.support.SnapTestClient;
 import com.microsoft.playwright.APIResponse;
@@ -36,9 +37,9 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
 
     @BeforeEach
     void setUp() throws Exception {
-        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.publicKey());
+        app = new FakePartnerApp("bank-id", "bank-secret", bankKeys.of(Bank.BRI).publicKey());
         partner = signupWithKey(false, 300);
-        assertThat(api.put("/portal/api/endpoint", json().setData("{\"baseUrl\":\"" + app.baseUrl()
+        assertThat(api.put(conn(partner, "/endpoint"), json(partner).setData("{\"baseUrl\":\"" + app.baseUrl()
                 + "\",\"clientId\":\"bank-id\",\"clientSecret\":\"bank-secret\"}")).status()).isEqualTo(204);
         client = snapClient(partner);
         token = client.obtainToken();
@@ -49,12 +50,8 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
         app.close();
     }
 
-    private RequestOptions json() {
-        return basicAuth(partner).setHeader("Content-Type", "application/json");
-    }
-
-    private APIResponse addRule(String body) {
-        return api.post("/portal/api/injections", json().setData(body));
+        private APIResponse addRule(String body) {
+        return api.post(conn(partner, "/injections"), json(partner).setData(body));
     }
 
     private String create(String customerNo, String trxId) {
@@ -65,27 +62,27 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
     }
 
     private JsonNode biller(String customerNo) {
-        return SnapTestClient.json(api.post("/portal/api/biller-payments", json().setData("{\"virtualAccountNo\":\""
+        return SnapTestClient.json(api.post(conn(partner, "/biller-payments"), json(partner).setData("{\"virtualAccountNo\":\""
                 + partner.partnerServiceId() + customerNo + "\",\"amount\":\"5000.00\",\"channelId\":\"00002\"}")));
     }
 
     @Test
     @DisplayName("HTTP_ERROR answers 500 in SNAP format, then 503 empty, then the rule is used up")
     void httpError() {
-        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"CREATE_VA\",\"httpStatus\":500,\"remaining\":1}").status()).isEqualTo(201);
-        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"CREATE_VA\",\"httpStatus\":503,\"remaining\":1}").status()).isEqualTo(201);
+        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"BRI_CREATE_VA\",\"httpStatus\":500,\"remaining\":1}").status()).isEqualTo(201);
+        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"BRI_CREATE_VA\",\"httpStatus\":503,\"remaining\":1}").status()).isEqualTo(201);
         assertCode(client.call("POST", CREATE, token, create("1", "E1")), "5002700", "General Error");
         APIResponse unavailable = client.call("POST", CREATE, token, create("1", "E1"));
         assertThat(unavailable.status()).isEqualTo(503);
         assertThat(unavailable.text()).isEmpty();
         assertCode(client.call("POST", CREATE, token, create("1", "E1")), "2002700", "Successful");
-        assertThat(SnapTestClient.json(api.get("/portal/api/injections", basicAuth(partner))).size()).isZero();
+        assertThat(SnapTestClient.json(api.get(conn(partner, "/injections"), basicAuth(partner))).size()).isZero();
     }
 
     @Test
     @DisplayName("TIMEOUT_AFTER_PROCESSING: the client times out, but the VA was created")
     void timeoutAfterProcessing() {
-        addRule("{\"type\":\"TIMEOUT_AFTER_PROCESSING\",\"target\":\"CREATE_VA\",\"delayMs\":3000,\"remaining\":1}");
+        addRule("{\"type\":\"TIMEOUT_AFTER_PROCESSING\",\"target\":\"BRI_CREATE_VA\",\"delayMs\":3000,\"remaining\":1}");
         Map<String, String> headers = client.serviceHeaders("POST", CREATE, token, create("2", "TO-1"));
         RequestOptions options = RequestOptions.create().setMethod("POST").setData(create("2", "TO-1")).setTimeout(1000);
         headers.forEach(options::setHeader);
@@ -100,7 +97,7 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
     @Test
     @DisplayName("SLOW_RESPONSE delays the answer, then processes normally")
     void slowResponse() {
-        addRule("{\"type\":\"SLOW_RESPONSE\",\"target\":\"CREATE_VA\",\"delayMs\":1200,\"remaining\":1}");
+        addRule("{\"type\":\"SLOW_RESPONSE\",\"target\":\"BRI_CREATE_VA\",\"delayMs\":1200,\"remaining\":1}");
         long started = System.nanoTime();
         assertCode(client.call("POST", CREATE, token, create("3", "SL-1")), "2002700", "Successful");
         assertThat((System.nanoTime() - started) / 1_000_000).isGreaterThanOrEqualTo(1200);
@@ -134,11 +131,11 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
     void validation() {
         assertThat(addRule("{\"type\":\"DROP_NOTIFICATION\",\"target\":\"INQUIRY\",\"remaining\":1}").text())
                 .contains("DROP_NOTIFICATION applies to PAYMENT");
-        assertThat(addRule("{\"type\":\"SLOW_RESPONSE\",\"target\":\"CREATE_VA\",\"remaining\":1}").text())
+        assertThat(addRule("{\"type\":\"SLOW_RESPONSE\",\"target\":\"BRI_CREATE_VA\",\"remaining\":1}").text())
                 .contains("SLOW_RESPONSE needs delayMs");
-        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"CREATE_VA\",\"httpStatus\":404,\"remaining\":1}").text())
+        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"BRI_CREATE_VA\",\"httpStatus\":404,\"remaining\":1}").text())
                 .contains("500, 502 or 503");
-        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"CREATE_VA\",\"remaining\":1}").text())
+        assertThat(addRule("{\"type\":\"HTTP_ERROR\",\"target\":\"BRI_CREATE_VA\",\"remaining\":1}").text())
                 .contains("needs httpStatus");
         assertThat(addRule("{\"type\":\"DROP_NOTIFICATION\",\"target\":\"PAYMENT\",\"delayMs\":5,\"remaining\":1}").text())
                 .contains("takes no delayMs");
@@ -148,7 +145,7 @@ class ErrorInjectionFunctionalTest extends PlaywrightTestBase {
 
         String id = SnapTestClient.json(addRule("{\"type\":\"INVALID_SIGNATURE\",\"target\":\"PAYMENT\",\"remaining\":3}"))
                 .get("id").asString();
-        assertThat(api.delete("/portal/api/injections/" + id, basicAuth(partner)).status()).isEqualTo(204);
-        assertThat(api.delete("/portal/api/injections/" + id, basicAuth(partner)).status()).isEqualTo(404);
+        assertThat(api.delete(conn(partner, "/injections/" + id), basicAuth(partner)).status()).isEqualTo(204);
+        assertThat(api.delete(conn(partner, "/injections/" + id), basicAuth(partner)).status()).isEqualTo(404);
     }
 }

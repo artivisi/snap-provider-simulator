@@ -2,16 +2,18 @@ package com.artivisi.snapsimulator.controller;
 
 import com.artivisi.snapsimulator.SpecRef;
 import com.artivisi.snapsimulator.dto.GeneratedKey;
-import com.artivisi.snapsimulator.dto.IssuedCredentials;
-import com.artivisi.snapsimulator.dto.PartnerView;
+import com.artivisi.snapsimulator.dto.form.ConnectionForm;
 import com.artivisi.snapsimulator.dto.form.EndpointForm;
 import com.artivisi.snapsimulator.dto.form.SettingsForm;
 import com.artivisi.snapsimulator.dto.form.SignupForm;
-import com.artivisi.snapsimulator.entity.Partner;
+import com.artivisi.snapsimulator.entity.BankConnection;
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.exception.BusinessException;
 import com.artivisi.snapsimulator.security.PartnerPrincipal;
+import com.artivisi.snapsimulator.service.ConnectionService;
 import com.artivisi.snapsimulator.service.PartnerDataService;
 import com.artivisi.snapsimulator.service.PartnerService;
+import com.artivisi.snapsimulator.snap.SnapService;
 import jakarta.validation.Valid;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +25,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,19 +34,32 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
+/** Account, bank connections and their onboarding pages. */
 @Controller
 @RequestMapping("/portal")
 public class PortalController {
 
-    private static final String REDIRECT_PORTAL = "redirect:/portal";
-
     private final PartnerService partners;
+    private final ConnectionService connections;
     private final PartnerDataService partnerData;
 
-    public PortalController(PartnerService partners, PartnerDataService partnerData) {
+    public PortalController(PartnerService partners, ConnectionService connections, PartnerDataService partnerData) {
         this.partners = partners;
+        this.connections = connections;
         this.partnerData = partnerData;
+    }
+
+    /** Puts the connection (as "conn") into the model for the connection navigation. */
+    static BankConnection connection(ConnectionService connections, PartnerPrincipal principal, UUID id, Model model) {
+        BankConnection c = connections.owned(principal.partnerId(), id);
+        model.addAttribute("conn", connections.view(c));
+        return c;
+    }
+
+    private static String redirect(UUID id, String page) {
+        return "redirect:/portal/c/" + id + page;
     }
 
     @GetMapping("/login")
@@ -59,71 +75,91 @@ public class PortalController {
 
     @SpecRef("sim.portal.signup")
     @PostMapping("/signup")
-    public String signup(@Valid @ModelAttribute("form") SignupForm form, BindingResult result, Model model) {
+    public String signup(@Valid @ModelAttribute("form") SignupForm form, BindingResult result) {
         if (result.hasErrors()) {
             return "portal/signup";
         }
         try {
-            IssuedCredentials issued = partners.signup(form.toRequest());
-            model.addAttribute("issued", issued);
-            return "portal/issued";
+            partners.signup(form.toRequest());
         } catch (BusinessException e) {
             result.rejectValue(e.field(), "rejected", e.getMessage());
             return "portal/signup";
         }
+        return "redirect:/portal/login?registered";
+    }
+
+    @SpecRef("sim.portal.connection")
+    @GetMapping
+    public String account(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
+        model.addAttribute("account", connections.account(principal.partnerId()));
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", new ConnectionForm());
+        }
+        model.addAttribute("banks", Bank.values());
+        return "portal/account";
+    }
+
+    @SpecRef("sim.portal.connection")
+    @PostMapping("/connections")
+    public String addConnection(@AuthenticationPrincipal PartnerPrincipal principal,
+            @Valid @ModelAttribute("form") ConnectionForm form, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("account", connections.account(principal.partnerId()));
+            model.addAttribute("banks", Bank.values());
+            return "portal/account";
+        }
+        model.addAttribute("issued", connections.create(principal.partnerId(), form.toRequest()));
+        return "portal/issued";
     }
 
     @SpecRef("sim.portal.checklist")
-    @GetMapping
-    public String dashboard(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
-        Partner partner = partners.get(principal.partnerId());
-        model.addAttribute("partner", PartnerView.of(partner));
+    @GetMapping("/c/{id}")
+    public String dashboard(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id, Model model) {
+        BankConnection c = connection(connections, principal, id, model);
+        model.addAttribute("services", SnapService.of(c.getBank()));
         return "portal/dashboard";
     }
 
     @SpecRef("sim.portal.credentials")
-    @PostMapping("/credentials/secret")
-    public String regenerateSecret(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
-        model.addAttribute("issued", partners.regenerateSecret(principal.partnerId()));
+    @PostMapping("/c/{id}/credentials/secret")
+    public String regenerateSecret(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id,
+            Model model) {
+        model.addAttribute("issued", connections.regenerateSecret(principal.partnerId(), id));
         return "portal/issued";
     }
 
-    @GetMapping("/key")
-    public String key(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
-        model.addAttribute("publicKeyPem", partners.get(principal.partnerId()).getPublicKeyPem());
+    @GetMapping("/c/{id}/key")
+    public String key(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id, Model model) {
+        model.addAttribute("publicKeyPem", connection(connections, principal, id, model).getPublicKeyPem());
         return "portal/key";
     }
 
     @SpecRef("sim.portal.key-upload")
-    @PostMapping("/key")
-    public String uploadKey(@AuthenticationPrincipal PartnerPrincipal principal,
+    @PostMapping("/c/{id}/key")
+    public String uploadKey(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id,
             @RequestParam(name = "publicKeyPem", required = false) String pasted,
             @RequestParam(name = "publicKeyFile", required = false) MultipartFile file,
             Model model, RedirectAttributes redirect) throws IOException {
         String pem = file != null && !file.isEmpty() ? new String(file.getBytes(), StandardCharsets.US_ASCII) : pasted;
-        if (pem == null || pem.isBlank()) {
-            return keyError(principal, model, "Paste the public key or choose a .pem file.");
-        }
         try {
-            partners.registerPublicKey(principal.partnerId(), pem);
+            if (pem == null || pem.isBlank()) {
+                throw new BusinessException("publicKeyPem", "Paste the public key or choose a .pem file.");
+            }
+            connections.registerPublicKey(principal.partnerId(), id, pem);
         } catch (BusinessException e) {
-            return keyError(principal, model, e.getMessage());
+            model.addAttribute("keyError", e.getMessage());
+            model.addAttribute("publicKeyPem", connection(connections, principal, id, model).getPublicKeyPem());
+            return "portal/key";
         }
         redirect.addFlashAttribute("message", "Public key registered.");
-        return "redirect:/portal/key";
-    }
-
-    private String keyError(PartnerPrincipal principal, Model model, String message) {
-        model.addAttribute("keyError", message);
-        model.addAttribute("publicKeyPem", partners.get(principal.partnerId()).getPublicKeyPem());
-        return "portal/key";
+        return redirect(id, "/key");
     }
 
     /** Stores the public key and sends the private key as a download; it is not kept. */
     @SpecRef("sim.portal.key-generate")
-    @PostMapping("/key/generate")
-    public ResponseEntity<String> generateKey(@AuthenticationPrincipal PartnerPrincipal principal) {
-        GeneratedKey key = partners.generateKey(principal.partnerId());
+    @PostMapping("/c/{id}/key/generate")
+    public ResponseEntity<String> generateKey(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id) {
+        GeneratedKey key = connections.generateKey(principal.partnerId(), id);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename("private.pem").build().toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -131,47 +167,53 @@ public class PortalController {
                 .body(key.privateKeyPem());
     }
 
-    @GetMapping("/settings")
-    public String settingsForm(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
-        model.addAttribute("form", SettingsForm.of(partners.get(principal.partnerId())));
+    @GetMapping("/c/{id}/settings")
+    public String settingsForm(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id, Model model) {
+        model.addAttribute("form", SettingsForm.of(connection(connections, principal, id, model)));
         return "portal/settings";
     }
 
     @SpecRef("sim.portal.settings")
-    @PostMapping("/settings")
-    public String settings(@AuthenticationPrincipal PartnerPrincipal principal,
-            @Valid @ModelAttribute("form") SettingsForm form, BindingResult result, RedirectAttributes redirect) {
+    @PostMapping("/c/{id}/settings")
+    public String settings(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id,
+            @Valid @ModelAttribute("form") SettingsForm form, BindingResult result, Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
+            connection(connections, principal, id, model);
             return "portal/settings";
         }
-        partners.updateSettings(principal.partnerId(), form.toRequest());
+        connections.updateSettings(principal.partnerId(), id, form.toRequest());
         redirect.addFlashAttribute("message", "Settings saved.");
-        return REDIRECT_PORTAL;
+        return redirect(id, "");
     }
 
-    @GetMapping("/endpoint")
-    public String endpointForm(@AuthenticationPrincipal PartnerPrincipal principal, Model model) {
-        model.addAttribute("form", EndpointForm.of(partners.get(principal.partnerId())));
+    @GetMapping("/c/{id}/endpoint")
+    public String endpointForm(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id, Model model) {
+        BankConnection c = connection(connections, principal, id, model);
+        model.addAttribute("form", EndpointForm.of(c));
         return "portal/endpoint";
     }
 
     @SpecRef("sim.portal.endpoint")
-    @PostMapping("/endpoint")
-    public String endpoint(@AuthenticationPrincipal PartnerPrincipal principal,
-            @Valid @ModelAttribute("form") EndpointForm form, BindingResult result, RedirectAttributes redirect) {
+    @PostMapping("/c/{id}/endpoint")
+    public String endpoint(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id,
+            @Valid @ModelAttribute("form") EndpointForm form, BindingResult result, Model model,
+            RedirectAttributes redirect) {
         if (result.hasErrors()) {
+            connection(connections, principal, id, model);
             return "portal/endpoint";
         }
-        partners.updateEndpoint(principal.partnerId(), form.toRequest());
+        connections.updateEndpoint(principal.partnerId(), id, form.toRequest());
         redirect.addFlashAttribute("message", "Partner endpoint saved.");
-        return "redirect:/portal/endpoint";
+        return redirect(id, "/endpoint");
     }
 
     @SpecRef("sim.portal.reset")
-    @PostMapping("/reset")
-    public String reset(@AuthenticationPrincipal PartnerPrincipal principal, RedirectAttributes redirect) {
-        partnerData.reset(principal.partnerId());
+    @PostMapping("/c/{id}/reset")
+    public String reset(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id,
+            RedirectAttributes redirect) {
+        partnerData.reset(connections.owned(principal.partnerId(), id).getId());
         redirect.addFlashAttribute("message", "Simulation data reset.");
-        return REDIRECT_PORTAL;
+        return redirect(id, "");
     }
 }

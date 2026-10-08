@@ -24,7 +24,8 @@ public record SimulatorProperties(
     /** An unset env var reaches the binder as the literal placeholder. */
     static final String NOT_PLACEHOLDER = "^(?!\\$\\{).*";
 
-    public record Bank(@NotBlank @Pattern(regexp = NOT_PLACEHOLDER, message = "env var not set") String privateKeyPath) {
+    /** keyDir holds one PKCS#8 key per bank: bri-private.pem, bca-private.pem. */
+    public record Bank(@NotBlank @Pattern(regexp = NOT_PLACEHOLDER, message = "env var not set") String keyDir) {
     }
 
     public record Operator(

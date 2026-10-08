@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface ExchangeLogRepository extends JpaRepository<ExchangeLog, UUID> {
 
-    List<ExchangeLog> findByPartnerIdOrderByCreatedAtDesc(UUID partnerId, Pageable pageable);
+    List<ExchangeLog> findByConnectionIdOrderByCreatedAtDesc(UUID connectionId, Pageable pageable);
 }

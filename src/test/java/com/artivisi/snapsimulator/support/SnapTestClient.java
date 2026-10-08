@@ -1,5 +1,6 @@
 package com.artivisi.snapsimulator.support;
 
+import com.artivisi.snapsimulator.enums.Bank;
 import com.artivisi.snapsimulator.snap.SnapSignature;
 import com.artivisi.snapsimulator.snap.SnapTimestamp;
 import com.artivisi.snapsimulator.util.Randoms;
@@ -14,21 +15,33 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** A partner app's SNAP client, signing with the snap package; headers can be altered per call. */
+/**
+ * A partner app's SNAP client for one bank connection, signing with the snap
+ * package; headers can be altered per call.
+ */
 public class SnapTestClient {
 
     public static final JsonMapper JSON = JsonMapper.builder().build();
 
     private final APIRequestContext api;
+    private final Bank bank;
     private final String clientId;
+    private final String partnerServiceId;
     private final PrivateKey privateKey;
     private final String clientSecret;
 
-    public SnapTestClient(APIRequestContext api, String clientId, PrivateKey privateKey, String clientSecret) {
+    public SnapTestClient(APIRequestContext api, Bank bank, String clientId, String partnerServiceId,
+            PrivateKey privateKey, String clientSecret) {
         this.api = api;
+        this.bank = bank;
         this.clientId = clientId;
+        this.partnerServiceId = partnerServiceId;
         this.privateKey = privateKey;
         this.clientSecret = clientSecret;
+    }
+
+    public String tokenPath() {
+        return bank == Bank.BRI ? "/snap/v1.0/access-token/b2b" : "/openapi/v1.0/access-token/b2b";
     }
 
     public Map<String, String> tokenHeaders(String timestamp) {
@@ -43,7 +56,7 @@ public class SnapTestClient {
     public APIResponse token(Map<String, String> headers, String body) {
         RequestOptions options = RequestOptions.create().setData(body);
         headers.forEach(options::setHeader);
-        return api.post("/snap/v1.0/access-token/b2b", options);
+        return api.post(tokenPath(), options);
     }
 
     public String obtainToken() {
@@ -62,8 +75,8 @@ public class SnapTestClient {
         h.put("X-TIMESTAMP", timestamp);
         h.put("X-SIGNATURE", SnapSignature.hmac(clientSecret,
                 SnapSignature.symmetricStringToSign(method, path, accessToken, body, timestamp)));
-        h.put("X-PARTNER-ID", clientId);
-        h.put("CHANNEL-ID", "95221");
+        h.put("X-PARTNER-ID", bank == Bank.BRI ? clientId : partnerServiceId.trim());
+        h.put("CHANNEL-ID", bank == Bank.BRI ? "95221" : "95231");
         h.put("X-EXTERNAL-ID", Randoms.digits(20));
         return h;
     }
