@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-only RSA key with no value outside the test suite"
+paths = ['''src/test/resources/keys/bank-test-private\.pem''']

@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  security-events: write
+  actions: read
+
+jobs:
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Install Gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar xz
+          sudo mv gitleaks /usr/local/bin/
+      - name: Gitleaks
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose --redact --exit-code 1
+
+  verify:
+    name: Verify (tests, traceability, coverage, SpotBugs)
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - name: Install Playwright Chromium
+        run: ./mvnw -q test-compile exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.classpathScope=test -Dexec.args="install --with-deps chromium"
+      - name: Verify
+        run: ./mvnw -B verify
+      - name: Coverage summary
+        if: always()
+        run: |
+          [ -f target/site/jacoco/jacoco.csv ] || exit 0
+          awk -F, 'NR>1 {lm+=$8; lc+=$9; bm+=$6; bc+=$7}
+            END {printf "## Coverage\n\n| Counter | Covered |\n|---|---|\n| Line | %.1f%% |\n| Branch | %.1f%% |\n", 100*lc/(lc+lm), 100*bc/(bc+bm)}' \
+            target/site/jacoco/jacoco.csv >> "$GITHUB_STEP_SUMMARY"
+      - name: Test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test results
+          path: target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+      - name: Upload reports
+        uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: reports
+          path: |
+            target/site/jacoco/
+            target/surefire-reports/
+            target/spotbugsXml.xml
+          if-no-files-found: ignore
+
+  codeql:
+    name: CodeQL
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: java-kotlin
+          queries: +security-extended
+      - run: ./mvnw -q -B compile
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:java-kotlin

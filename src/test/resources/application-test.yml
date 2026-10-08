@@ -1,0 +1,15 @@
+# Values the environment provides in a deployment. The datasource comes from
+# Testcontainers (@ServiceConnection); the bank key is a test-only fixture.
+simulator:
+  timestamp-skew: 5m
+  bank:
+    private-key-path: src/test/resources/keys/bank-test-private.pem
+  operator:
+    username: operator
+    password: operator-test-password
+  outbound:
+    connect-timeout: 2s
+    read-timeout: 5s
+spring:
+  thymeleaf:
+    cache: false

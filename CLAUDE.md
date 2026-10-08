@@ -3,7 +3,7 @@
 Local simulator of BRI's SNAP (Standar Nasional Open API Pembayaran) VA side,
 for developing and testing partner apps against SNAP without a bank sandbox.
 Public repo, Apache 2.0. README.md holds the original design (written for the
-gateway use case). Status: design only, no code yet (as of 2026-10-06).
+gateway use case). Status: in development toward 2026.10-RELEASE.
 Plan: `docs/implementation-plan.md`.
 
 The simulator is a general-purpose tool: no reference to any training, course,

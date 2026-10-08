@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SpotBugs exclusions. Each Match carries a comment stating why the finding is
+not a defect in this application. Add one only after the code is right.
+-->
+<FindBugsFilter>
+</FindBugsFilter>

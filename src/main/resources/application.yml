@@ -1,0 +1,54 @@
+# Every simulator.* and datasource value is required and comes from the
+# environment. Startup fails with the property name when one is missing.
+spring:
+  application:
+    name: snap-provider-simulator
+  datasource:
+    url: ${SIMULATOR_DB_URL}
+    username: ${SIMULATOR_DB_USERNAME}
+    password: ${SIMULATOR_DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  thymeleaf:
+    cache: true
+  jackson:
+    time-zone: Asia/Jakarta
+
+server:
+  port: 9090
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-exception: false
+    include-binding-errors: never
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: strict
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+simulator:
+  timestamp-skew: ${SIMULATOR_TIMESTAMP_SKEW}
+  bank:
+    private-key-path: ${SIMULATOR_BANK_PRIVATE_KEY_PATH}
+  operator:
+    username: ${SIMULATOR_OPERATOR_USERNAME}
+    password: ${SIMULATOR_OPERATOR_PASSWORD}
+  outbound:
+    connect-timeout: ${SIMULATOR_OUTBOUND_CONNECT_TIMEOUT}
+    read-timeout: ${SIMULATOR_OUTBOUND_READ_TIMEOUT}

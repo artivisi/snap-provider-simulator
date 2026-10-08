@@ -25,6 +25,9 @@ discipline. Where this document and Balaka differ, this document wins.
   are traced the same way as bank-spec items.
 - `SpecTraceabilityTest` scans compiled classes (main and test) and fails with
   the list of unresolved refs and of in-scope items missing a main or test ref.
+- Items not built yet are listed in the test's `PENDING` set. An entry that
+  becomes traced fails the build until it is removed, so the list only shrinks;
+  a release requires it to be empty.
 
 ## Source layout (package-by-layer, as Balaka)
 
