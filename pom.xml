@@ -274,8 +274,8 @@
 					<schemaVersion>1.6</schemaVersion>
 					<includeTestScope>false</includeTestScope>
 					<includeLicenseText>false</includeLicenseText>
+					<!-- Spring Boot's parent sets the output: target/classes/META-INF/sbom/application.cdx.json -->
 					<outputFormat>json</outputFormat>
-					<outputName>sbom</outputName>
 				</configuration>
 			</plugin>
 			<plugin>

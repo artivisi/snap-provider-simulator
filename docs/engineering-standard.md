@@ -106,7 +106,7 @@ field encryption, security audit log, remember-me, CSP nonces, HSTS, DAST.
   Docker Hub `artivisi/snap-provider-simulator`, with SBOM and provenance
   attestation. Image tests: `./mvnw -P image-test test -Dimage.name=<image>`. Tags via `docker/metadata-action` as Balaka
   (`2026.10`, `latest` on release, `main`, `main-<sha>`).
-- `release.yml`: on `*-RELEASE`, GitHub Release with the jar, CycloneDX SBOM
+- `release.yml`: on `*-RELEASE` (or manual dispatch with a tag), GitHub Release with the jar, CycloneDX SBOM
   and `docs/releases/<TAG>.md` as the body.
 
 ## Container

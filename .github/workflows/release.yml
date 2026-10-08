@@ -3,9 +3,17 @@ name: Release
 on:
   push:
     tags: ['*-RELEASE']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing *-RELEASE tag to publish (re-run after a failed release)'
+        required: true
 
 permissions:
   contents: write
+
+env:
+  TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
 
 jobs:
   release:
@@ -13,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: ${{ env.TAG }}
           fetch-depth: 0
       - uses: actions/setup-java@v5
         with:
@@ -20,14 +29,18 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Release notes present
-        run: test -f "docs/releases/${GITHUB_REF_NAME}.md" || { echo "docs/releases/${GITHUB_REF_NAME}.md missing"; exit 1; }
+        run: test -f "docs/releases/${TAG}.md" || { echo "docs/releases/${TAG}.md missing"; exit 1; }
       - name: Build jar and SBOM
-        run: ./mvnw -B -DskipTests package
+        run: |
+          ./mvnw -B -DskipTests package
+          # Spring Boot's parent writes the CycloneDX SBOM into the jar's resources.
+          cp target/classes/META-INF/sbom/application.cdx.json "target/snap-provider-simulator-${TAG}.cdx.json"
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
-            --notes-file "docs/releases/${GITHUB_REF_NAME}.md" \
-            target/snap-provider-simulator-*.jar target/sbom.json
+          gh release create "$TAG" \
+            --verify-tag \
+            --title "$TAG" \
+            --notes-file "docs/releases/${TAG}.md" \
+            "target/snap-provider-simulator-${TAG}.jar" "target/snap-provider-simulator-${TAG}.cdx.json"
