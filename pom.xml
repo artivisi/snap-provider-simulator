@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.artivisi</groupId>
 	<artifactId>snap-provider-simulator</artifactId>
-	<version>2026.10-RELEASE</version>
+	<version>2026.11-SNAPSHOT</version>
 	<name>snap-provider-simulator</name>
 	<description>Local simulator of a bank's SNAP virtual account API</description>
 	<url>https://github.com/artivisi/snap-provider-simulator</url>
