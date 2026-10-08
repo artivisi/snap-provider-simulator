@@ -6,6 +6,7 @@ import com.artivisi.snapsimulator.entity.Partner;
 import com.artivisi.snapsimulator.enums.Direction;
 import com.artivisi.snapsimulator.exception.SnapException;
 import com.artivisi.snapsimulator.service.ExchangeLogService;
+import com.artivisi.snapsimulator.service.InjectionService;
 import com.artivisi.snapsimulator.service.SnapAuthenticator;
 import com.artivisi.snapsimulator.snap.SnapService;
 import com.artivisi.snapsimulator.snap.SnapTimestamp;
@@ -41,13 +42,15 @@ public class SnapInboundFilter extends OncePerRequestFilter {
 
     private final SnapAuthenticator authenticator;
     private final ExchangeLogService exchangeLog;
+    private final InjectionService injections;
     private final JsonMapper json;
     private final Clock clock;
 
-    public SnapInboundFilter(SnapAuthenticator authenticator, ExchangeLogService exchangeLog, JsonMapper json,
-            Clock clock) {
+    public SnapInboundFilter(SnapAuthenticator authenticator, ExchangeLogService exchangeLog,
+            InjectionService injections, JsonMapper json, Clock clock) {
         this.authenticator = authenticator;
         this.exchangeLog = exchangeLog;
+        this.injections = injections;
         this.json = json;
         this.clock = clock;
     }
@@ -75,7 +78,13 @@ public class SnapInboundFilter extends OncePerRequestFilter {
                     ? authenticator.authenticateToken(wrapped, now)
                     : authenticator.authenticateService(wrapped, wrapped.bodyText(), svc, now);
             wrapped.setAttribute(PARTNER, partner);
-            chain.doFilter(wrapped, captured);
+            Optional<InjectionService.Taken> rule = injections.take(partner.getId(), svc.name());
+            if (rule.isEmpty()) {
+                chain.doFilter(wrapped, captured);
+            } else {
+                error = "injected " + rule.get().type();
+                inject(rule.get(), svc, wrapped, captured, chain);
+            }
         } catch (SnapException e) {
             error = e.getMessage();
             captured.setStatus(e.responseCode().httpStatus());
@@ -84,6 +93,39 @@ public class SnapInboundFilter extends OncePerRequestFilter {
         } finally {
             record(wrapped, captured, now, started, error);
             captured.copyBodyToResponse();
+        }
+    }
+
+    /** Step 5 of the check chain: the partner's error-injection rule for this service. */
+    @SpecRef("sim.error-injection")
+    private void inject(InjectionService.Taken rule, SnapService svc, CachedBodyRequest request,
+            ContentCachingResponseWrapper response, FilterChain chain) throws ServletException, IOException {
+        switch (rule.type()) {
+            case HTTP_ERROR -> {
+                response.setStatus(rule.httpStatus());
+                if (rule.httpStatus() == 500) {
+                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                    response.getOutputStream().write(json.writeValueAsBytes(
+                            SnapErrorBody.of(new SnapException(svc.generalError()))));
+                }
+            }
+            case SLOW_RESPONSE -> {
+                sleep(rule.delayMs());
+                chain.doFilter(request, response);
+            }
+            case TIMEOUT_AFTER_PROCESSING -> {
+                chain.doFilter(request, response);
+                sleep(rule.delayMs());
+            }
+            default -> throw new IllegalStateException(rule.type() + " is not an inbound injection");
+        }
+    }
+
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 

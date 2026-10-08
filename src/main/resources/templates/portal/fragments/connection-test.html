@@ -1,0 +1,12 @@
+<div id="connection-result" xmlns:th="http://www.thymeleaf.org">
+    <p class="alert error" th:if="${failure}" th:text="${failure}"></p>
+    <th:block th:if="${result}">
+        <p th:class="${result.reachable} ? 'alert' : 'alert error'" id="connection-outcome"
+           th:text="${result.reachable} ? 'Reachable: the partner issued a token to the bank.' : 'Not reachable: see the response below and the exchange log.'"></p>
+        <dl class="pairs">
+            <dt>HTTP status</dt><dd th:text="${result.httpStatus != null} ? ${result.httpStatus} : 'no response'"></dd>
+            <th:block th:if="${result.error}"><dt>Error</dt><dd th:text="${result.error}"></dd></th:block>
+        </dl>
+        <pre th:if="${result.responseBody}" th:text="${result.responseBody}"></pre>
+    </th:block>
+</div>

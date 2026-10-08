@@ -16,7 +16,19 @@ import com.artivisi.snapsimulator.dto.PaymentResult;
 import com.artivisi.snapsimulator.dto.PaymentView;
 import com.artivisi.snapsimulator.dto.VaPayRequest;
 import com.artivisi.snapsimulator.dto.VirtualAccountView;
+import com.artivisi.snapsimulator.dto.InjectionRuleRequest;
+import com.artivisi.snapsimulator.dto.InjectionRuleView;
+import com.artivisi.snapsimulator.dto.SeedRequest;
+import com.artivisi.snapsimulator.dto.SeedResult;
 import com.artivisi.snapsimulator.service.ConnectionTestService;
+import com.artivisi.snapsimulator.service.InjectionService;
+import com.artivisi.snapsimulator.service.ReconciliationSeeder;
+import com.artivisi.snapsimulator.service.StatementService;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import com.artivisi.snapsimulator.service.PaymentService;
 import com.artivisi.snapsimulator.service.VirtualAccountService;
 import com.artivisi.snapsimulator.service.ExchangeLogService;
@@ -36,6 +48,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,9 +63,16 @@ public class PortalApiController {
     private final ConnectionTestService connectionTest;
     private final PaymentService payments;
     private final VirtualAccountService accounts;
+    private final InjectionService injections;
+    private final StatementService statements;
+    private final ReconciliationSeeder seeder;
 
     public PortalApiController(PartnerService partners, PartnerDataService partnerData, ExchangeLogService exchangeLog,
-            ConnectionTestService connectionTest, PaymentService payments, VirtualAccountService accounts) {
+            ConnectionTestService connectionTest, PaymentService payments, VirtualAccountService accounts,
+            InjectionService injections, StatementService statements, ReconciliationSeeder seeder) {
+        this.injections = injections;
+        this.statements = statements;
+        this.seeder = seeder;
         this.partners = partners;
         this.partnerData = partnerData;
         this.exchangeLog = exchangeLog;
@@ -162,5 +182,43 @@ public class PortalApiController {
     @GetMapping("/payments")
     public List<PaymentView> payments(@AuthenticationPrincipal PartnerPrincipal principal) {
         return payments.list(principal.partnerId()).stream().map(PaymentView::of).toList();
+    }
+
+    @SpecRef("sim.error-injection")
+    @GetMapping("/injections")
+    public List<InjectionRuleView> injections(@AuthenticationPrincipal PartnerPrincipal principal) {
+        return injections.list(principal.partnerId()).stream().map(InjectionRuleView::of).toList();
+    }
+
+    @SpecRef("sim.error-injection")
+    @PostMapping("/injections")
+    @ResponseStatus(HttpStatus.CREATED)
+    public InjectionRuleView addInjection(@AuthenticationPrincipal PartnerPrincipal principal,
+            @Valid @RequestBody InjectionRuleRequest request) {
+        return InjectionRuleView.of(injections.add(principal.partnerId(), request));
+    }
+
+    @SpecRef("sim.error-injection")
+    @DeleteMapping("/injections/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteInjection(@AuthenticationPrincipal PartnerPrincipal principal, @PathVariable UUID id) {
+        injections.delete(principal.partnerId(), id);
+    }
+
+    @SpecRef("sim.statement-csv")
+    @GetMapping("/statements/{day}.csv")
+    public ResponseEntity<String> statement(@AuthenticationPrincipal PartnerPrincipal principal,
+            @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("statement-" + day + ".csv").build().toString())
+                .contentType(new MediaType("text", "csv", java.nio.charset.StandardCharsets.UTF_8))
+                .body(statements.csv(principal.partnerId(), day));
+    }
+
+    @SpecRef("sim.reconciliation-seeder")
+    @PostMapping("/reconciliation-seed")
+    public List<SeedResult> seed(@AuthenticationPrincipal PartnerPrincipal principal, @Valid @RequestBody SeedRequest request) {
+        return seeder.seed(principal.partnerId(), request);
     }
 }

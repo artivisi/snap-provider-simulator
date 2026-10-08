@@ -17,6 +17,9 @@ spring:
     cache: true
   jackson:
     time-zone: Asia/Jakarta
+  threads:
+    virtual:
+      enabled: true
 
 server:
   port: 9090

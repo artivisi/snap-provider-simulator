@@ -10,6 +10,8 @@ import com.artivisi.snapsimulator.entity.Payment;
 import com.artivisi.snapsimulator.entity.VirtualAccount;
 import com.artivisi.snapsimulator.enums.Channel;
 import com.artivisi.snapsimulator.enums.ChecklistItem;
+import com.artivisi.snapsimulator.enums.InjectionType;
+import com.artivisi.snapsimulator.enums.OutboundTarget;
 import com.artivisi.snapsimulator.enums.NotificationStatus;
 import com.artivisi.snapsimulator.enums.VaModel;
 import com.artivisi.snapsimulator.enums.VaStatus;
@@ -50,12 +52,14 @@ public class PaymentService {
     private final VirtualAccountRepository accounts;
     private final LedgerEntryRepository ledger;
     private final ChecklistService checklist;
+    private final InjectionService injections;
     private final JsonMapper json;
     private final Clock clock;
 
     public PaymentService(PartnerService partners, PartnerClient client, PaymentRepository payments,
             VirtualAccountRepository accounts, LedgerEntryRepository ledger, ChecklistService checklist,
-            JsonMapper json, Clock clock) {
+            InjectionService injections, JsonMapper json, Clock clock) {
+        this.injections = injections;
         this.partners = partners;
         this.client = client;
         this.payments = payments;
@@ -77,22 +81,38 @@ public class PaymentService {
     @SpecRef("bri.briva-online.inquiry#request.channelCode")
     @SpecRef("bri.briva-online.inquiry#request.sourceBankCode")
     public PaymentResult payBillerHosted(UUID partnerId, BillerPaymentRequest request) {
-        Partner partner = partners.get(partnerId);
-        Channel channel = channel(request.channelId());
+        return billerFlow(partners.get(partnerId), request.virtualAccountNo(), new BigDecimal(request.amount()),
+                channel(request.channelId()), Scenario.NORMAL);
+    }
+
+    /** How the seeder distorts a biller-hosted payment; NORMAL applies the partner's injection rules instead. */
+    public enum Scenario {
+        NORMAL,
+        DROPPED,
+        AMOUNT_MISMATCH,
+        DUPLICATE
+    }
+
+    /** Amount added to the notified paidAmount in the AMOUNT_MISMATCH scenario. */
+    static final BigDecimal MISMATCH_DELTA = new BigDecimal("1000.00");
+
+    /** amount null: the customer pays the totalAmount the partner answered in the inquiry. */
+    PaymentResult billerFlow(Partner partner, String virtualAccountNo, BigDecimal amount, Channel channel,
+            Scenario scenario) {
+        UUID partnerId = partner.getId();
         String prefix = partner.getPartnerServiceId();
-        if (!request.virtualAccountNo().startsWith(prefix)
-                || !request.virtualAccountNo().substring(prefix.length()).matches("\\d{1,13}")) {
+        if (!virtualAccountNo.startsWith(prefix) || !virtualAccountNo.substring(prefix.length()).matches("\\d{1,13}")) {
             throw new BusinessException("virtualAccountNo",
                     "VA number must be your partnerServiceId \"" + prefix + "\" followed by 1-13 digits");
         }
-        String customerNo = request.virtualAccountNo().substring(prefix.length());
+        String customerNo = virtualAccountNo.substring(prefix.length());
         String requestId = UUID.randomUUID().toString();
         Instant now = clock.instant();
 
         ObjectNode inquiry = json.createObjectNode();
         inquiry.put("partnerServiceId", prefix);
         inquiry.put("customerNo", customerNo);
-        inquiry.put("virtualAccountNo", request.virtualAccountNo());
+        inquiry.put("virtualAccountNo", virtualAccountNo);
         ObjectNode zero = inquiry.putObject("amount");
         zero.put("value", "0.00");
         zero.put("currency", CURRENCY);
@@ -102,8 +122,10 @@ public class PaymentService {
         inquiry.put("inquiryRequestId", requestId);
         PartnerClient.Exchange answer;
         try {
+            boolean corrupt = scenario == Scenario.NORMAL && injections.take(partnerId, OutboundTarget.INQUIRY.name())
+                    .filter(r -> r.type() == InjectionType.INVALID_SIGNATURE).isPresent();
             answer = client.post(partner, PartnerClient.INQUIRY_PATH, json.writeValueAsString(inquiry), channel.id(),
-                    PartnerClient.newExternalId(), false);
+                    PartnerClient.newExternalId(), corrupt);
         } catch (OutboundException e) {
             return new PaymentResult(null, null, null, null, e.getMessage());
         }
@@ -114,12 +136,24 @@ public class PaymentService {
         }
         checklist.stamp(partnerId, ChecklistItem.INQUIRY_ANSWERED, clock.instant());
         JsonNode name = answer.json().at("/virtualAccountData/virtualAccountName");
+        BigDecimal paid = amount;
+        if (paid == null) {
+            JsonNode total = answer.json().at("/virtualAccountData/totalAmount/value");
+            if (total.isMissingNode() || total.isNull() || !total.asString().matches("\\d{1,16}\\.\\d{2}")) {
+                return new PaymentResult(null, inquiryCode, null, null,
+                        "Inquiry answer has no usable virtualAccountData.totalAmount.value; no payment made");
+            }
+            paid = new BigDecimal(total.asString());
+        }
 
         Payment payment = new Payment();
         payment.setPartner(partner);
         payment.setModel(VaModel.BILLER_HOSTED);
-        payment.setVirtualAccountNo(request.virtualAccountNo());
-        payment.setAmount(new BigDecimal(request.amount()));
+        payment.setVirtualAccountNo(virtualAccountNo);
+        payment.setAmount(paid);
+        if (scenario == Scenario.AMOUNT_MISMATCH) {
+            payment.setNotifiedAmount(paid.add(MISMATCH_DELTA));
+        }
         payment.setCurrency(CURRENCY);
         payment.setChannelId(channel.id());
         payment.setPaymentRequestId(requestId);
@@ -128,8 +162,21 @@ public class PaymentService {
         payment.setNotificationBody(paymentBody(payment, prefix, customerNo,
                 name.isMissingNode() || name.isNull() ? "" : name.asString(), channel, null));
         payments.save(payment);
-        credit(payment, "VA payment " + request.virtualAccountNo());
-        return notifyPartner(partner, payment, inquiryCode);
+        credit(payment, "VA payment " + virtualAccountNo);
+        return switch (scenario) {
+            case NORMAL -> notifyPartner(partner, payment, inquiryCode, true);
+            case DROPPED -> {
+                payment.setNotificationStatus(NotificationStatus.DROPPED);
+                payments.updateNotification(payment.getId(), NotificationStatus.DROPPED, null);
+                yield new PaymentResult(payment.getId(), inquiryCode, null, NotificationStatus.DROPPED,
+                        "Payment credited; notification not sent");
+            }
+            case AMOUNT_MISMATCH -> notifyPartner(partner, payment, inquiryCode, false);
+            case DUPLICATE -> {
+                notifyPartner(partner, payment, inquiryCode, false);
+                yield notifyPartner(partner, payment, inquiryCode, false);
+            }
+        };
     }
 
     /** Bank-hosted VA paid at a channel; notified with the same payment call, carrying trxId (A25). */
@@ -170,7 +217,7 @@ public class PaymentService {
             return new PaymentResult(payment.getId(), null, null, NotificationStatus.NOT_NOTIFIED,
                     "Paid; no partner endpoint registered, so no payment notification was sent");
         }
-        return notifyPartner(partner, payment, null);
+        return notifyPartner(partner, payment, null, true);
     }
 
     /** Sends the stored payment call again with the same X-EXTERNAL-ID and body. */
@@ -218,20 +265,39 @@ public class PaymentService {
         return json.writeValueAsString(body);
     }
 
-    private PaymentResult notifyPartner(Partner partner, Payment payment, String inquiryCode) {
+    /** Sends the payment call, applying the partner's PAYMENT injection rule if one is pending. */
+    @SpecRef("sim.error-injection")
+    private PaymentResult notifyPartner(Partner partner, Payment payment, String inquiryCode, boolean applyInjection) {
+        java.util.Optional<InjectionService.Taken> rule = applyInjection
+                ? injections.take(partner.getId(), OutboundTarget.PAYMENT.name())
+                : java.util.Optional.empty();
+        if (rule.isPresent() && rule.get().type() == InjectionType.DROP_NOTIFICATION) {
+            payment.setNotificationStatus(NotificationStatus.DROPPED);
+            payments.updateNotification(payment.getId(), NotificationStatus.DROPPED, null);
+            return new PaymentResult(payment.getId(), inquiryCode, null, NotificationStatus.DROPPED,
+                    "Payment credited; notification dropped by an injection rule");
+        }
+        if (rule.isPresent() && rule.get().type() == InjectionType.LATE_NOTIFICATION) {
+            try {
+                Thread.sleep(rule.get().delayMs());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        boolean corrupt = rule.isPresent() && rule.get().type() == InjectionType.INVALID_SIGNATURE;
         payment.setExternalId(PartnerClient.newExternalId());
         PartnerClient.Exchange answer;
         try {
             answer = client.post(partner, PartnerClient.PAYMENT_PATH, payment.getNotificationBody(),
-                    payment.getChannelId(), payment.getExternalId(), false);
+                    payment.getChannelId(), payment.getExternalId(), corrupt);
         } catch (OutboundException e) {
             payment.setNotificationStatus(NotificationStatus.SUSPENDED);
-            payments.save(payment);
+            payments.updateNotification(payment.getId(), NotificationStatus.SUSPENDED, payment.getExternalId());
             return new PaymentResult(payment.getId(), inquiryCode, null, NotificationStatus.SUSPENDED, e.getMessage());
         }
         NotificationStatus outcome = outcome(answer);
         payment.setNotificationStatus(outcome);
-        payments.save(payment);
+        payments.updateNotification(payment.getId(), outcome, payment.getExternalId());
         if (outcome == NotificationStatus.ACKNOWLEDGED) {
             checklist.stamp(partner.getId(), ChecklistItem.PAYMENT_ACKNOWLEDGED, clock.instant());
         } else if (outcome == NotificationStatus.REVERSED) {

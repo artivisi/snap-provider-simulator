@@ -135,6 +135,6 @@ CREATE TABLE injection_rule (
     rule_type   VARCHAR(32) NOT NULL,
     delay_ms    BIGINT,
     http_status INTEGER,
-    remaining   INTEGER     NOT NULL CHECK (remaining > 0)
+    remaining   INTEGER     NOT NULL CHECK (remaining >= 0)
 );
 CREATE INDEX injection_rule_partner_idx ON injection_rule (partner_id, target);

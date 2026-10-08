@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Error injection · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>Error injection</h1>
+    <p>A rule applies to the next matching call(s) and is used up after <em>remaining</em> calls.</p>
+    <th:block th:replace="~{fragments/flash :: flash}"></th:block>
+    <table class="table">
+        <thead><tr><th>Type</th><th>Targets</th><th>Effect</th></tr></thead>
+        <tbody>
+        <tr><td>TIMEOUT_AFTER_PROCESSING</td><td>inbound service</td><td>process and commit, wait delayMs, then answer</td></tr>
+        <tr><td>SLOW_RESPONSE</td><td>inbound service</td><td>wait delayMs, then process</td></tr>
+        <tr><td>HTTP_ERROR</td><td>inbound service</td><td>answer httpStatus 500, 502 or 503 without processing</td></tr>
+        <tr><td>INVALID_SIGNATURE</td><td>INQUIRY, PAYMENT</td><td>send a wrong X-SIGNATURE to your endpoint</td></tr>
+        <tr><td>LATE_NOTIFICATION</td><td>PAYMENT</td><td>send the payment call delayMs late</td></tr>
+        <tr><td>DROP_NOTIFICATION</td><td>PAYMENT</td><td>credit the ledger, never send the payment call</td></tr>
+        </tbody>
+    </table>
+
+    <section>
+        <h2>Add rule</h2>
+        <form th:action="@{/portal/injections}" method="post" class="stack" id="injection-form">
+            <label>Type
+                <select name="type" id="injection-type" required>
+                    <option th:each="t : ${types}" th:value="${t}" th:text="${t}"></option>
+                </select>
+            </label>
+            <label>Target
+                <select name="target" id="injection-target" required>
+                    <option th:each="s : ${services}" th:value="${s.name()}" th:text="|${s.name()} (inbound)|"></option>
+                    <option value="INQUIRY">INQUIRY (outbound)</option>
+                    <option value="PAYMENT">PAYMENT (outbound)</option>
+                </select>
+            </label>
+            <label>delayMs (TIMEOUT_AFTER_PROCESSING, SLOW_RESPONSE, LATE_NOTIFICATION)
+                <input type="number" name="delayMs" id="injection-delay" min="1" max="120000">
+            </label>
+            <label>httpStatus (HTTP_ERROR)
+                <select name="httpStatus" id="injection-status">
+                    <option value="">-</option>
+                    <option value="500">500</option>
+                    <option value="502">502</option>
+                    <option value="503">503</option>
+                </select>
+            </label>
+            <label>Remaining calls <input type="number" name="remaining" id="injection-remaining" min="1" max="100" required></label>
+            <button type="submit" id="injection-submit">Add rule</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Pending rules</h2>
+        <p th:if="${rules.isEmpty()}" id="no-rules">No rules.</p>
+        <table class="table" id="rules" th:unless="${rules.isEmpty()}">
+            <thead><tr><th>Type</th><th>Target</th><th>delayMs</th><th>httpStatus</th><th>Remaining</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rules}" class="rule">
+                <td th:text="${r.type}"></td><td th:text="${r.target}"></td>
+                <td th:text="${r.delayMs}"></td><td th:text="${r.httpStatus}"></td><td th:text="${r.remaining}"></td>
+                <td>
+                    <form th:action="@{/portal/injections/{id}/delete(id=${r.id})}" method="post" class="inline">
+                        <button type="submit" class="danger delete-rule">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+</body>
+</html>

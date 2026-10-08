@@ -83,4 +83,10 @@ form.inline { display: inline; }
 .badge.done { background: #e3f4ea; color: var(--ok); }
 .badge.error { background: #fdecea; color: var(--error); }
 
+details.exchange { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: .5rem .9rem; margin: .4rem 0; }
+details.exchange summary { cursor: pointer; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+details.exchange h3 { font-size: .85rem; color: var(--muted); margin: .75rem 0 .25rem; }
+select { font: inherit; padding: .4rem .5rem; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+form.inline select { margin-right: .4rem; }
+
 .footer { max-width: 64rem; margin: 2rem auto; padding: 0 1.5rem; color: var(--muted); font-size: .8em; }

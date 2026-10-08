@@ -24,6 +24,13 @@
         </label>
         <button type="submit" id="endpoint-submit">Save</button>
     </form>
+    <section>
+        <h2>Test connection</h2>
+        <p>The bank requests a token from <code>{base URL}/v1.0/access-token/b2b</code>, signed with the bank key.</p>
+        <button type="button" class="secondary" id="test-connection"
+                th:attr="hx-post=@{/portal/endpoint/test}" hx-target="#connection-result" hx-swap="outerHTML">Test connection</button>
+        <div id="connection-result"></div>
+    </section>
 </main>
 </body>
 </html>

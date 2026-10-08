@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Exchange log · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>Exchange log</h1>
+    <p>The latest 50 calls, newest first: your calls to the simulator (INBOUND) and the bank's calls to your
+        endpoint (OUTBOUND), as sent and received.</p>
+    <p th:if="${exchanges.isEmpty()}" id="no-exchanges">No calls yet.</p>
+    <div id="exchanges">
+        <details th:each="x : ${exchanges}" class="exchange" th:attr="data-testid=|exchange-${x.id}|">
+            <summary>
+                <span th:text="${#temporals.format(x.createdAt, 'HH:mm:ss')}"></span>
+                <span class="badge" th:text="${x.direction}"></span>
+                <code th:text="|${x.method} ${x.url}|"></code>
+                <span class="badge status" th:classappend="${x.responseStatus != null and x.responseStatus < 300} ? 'done' : 'error'"
+                      th:text="${x.responseStatus != null} ? ${x.responseStatus} : 'no response'"></span>
+                <span th:text="|${x.durationMs} ms|"></span>
+            </summary>
+            <p class="alert error" th:if="${x.error}" th:text="${x.error}"></p>
+            <h3>Request headers</h3><pre th:text="${x.requestHeaders}"></pre>
+            <h3>Request body</h3><pre class="request-body" th:text="${x.requestBody}"></pre>
+            <th:block th:if="${x.stringToSign}"><h3>String-to-sign</h3><pre class="string-to-sign" th:text="${x.stringToSign}"></pre></th:block>
+            <h3>Response headers</h3><pre th:text="${x.responseHeaders}"></pre>
+            <h3>Response body</h3><pre class="response-body" th:text="${x.responseBody}"></pre>
+        </details>
+    </div>
+</main>
+</body>
+</html>

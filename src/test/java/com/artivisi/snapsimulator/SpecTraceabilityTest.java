@@ -30,8 +30,7 @@ class SpecTraceabilityTest {
      * In-scope items not implemented yet. Must be empty for a release; an entry
      * that is already traced in main and test fails the build so the list only shrinks.
      */
-    private static final Set<String> PENDING = Set.of(
-            "sim.statement-csv", "sim.error-injection", "sim.reconciliation-seeder");
+    private static final Set<String> PENDING = Set.of();
 
     private static final Map<String, JsonNode> ITEMS = new HashMap<>();
     private static final List<Ref> MAIN = new ArrayList<>();

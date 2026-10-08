@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layouts/main :: layout(~{::title}, ~{::main})}">
+<head><title>Payments · SNAP Provider Simulator</title></head>
+<body>
+<main>
+    <h1>Payments</h1>
+    <th:block th:replace="~{fragments/flash :: flash}"></th:block>
+
+    <section>
+        <h2>Simulate a customer payment (biller-hosted VA)</h2>
+        <p>The bank sends an inquiry to your endpoint, credits its ledger, then sends the payment call.</p>
+        <form th:action="@{/portal/payments/biller}" method="post" class="stack" id="biller-form">
+            <label>VA number (your partnerServiceId <code th:text="|&quot;${partnerServiceId}&quot;|"></code> + customer number)
+                <input type="text" name="virtualAccountNo" id="biller-va" required th:value="${partnerServiceId}">
+            </label>
+            <label>Amount <input type="text" name="amount" id="biller-amount" required placeholder="150000.00"></label>
+            <label>Channel
+                <select name="channelId" id="biller-channel" required>
+                    <option th:each="c : ${channels}" th:value="${c.id()}" th:text="|${c.id()} ${c.label()}|"></option>
+                </select>
+            </label>
+            <button type="submit" id="biller-submit">Pay</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Payments received</h2>
+        <p th:if="${payments.isEmpty()}" id="no-payments">No payments yet.</p>
+        <table class="table" id="payments" th:unless="${payments.isEmpty()}">
+            <thead><tr><th>Paid at</th><th>Model</th><th>VA number</th><th>Amount</th><th>Channel</th><th>Notification</th><th>X-EXTERNAL-ID</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${payments}" th:attr="data-testid=|payment-${p.paymentRequestId}|">
+                <td th:text="${#temporals.format(p.paidAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                <td th:text="${p.model}"></td>
+                <td><code th:text="|&quot;${p.virtualAccountNo}&quot;|"></code></td>
+                <td th:text="|${p.currency} ${p.amount}|"></td>
+                <td th:text="${p.channelId}"></td>
+                <td><span class="badge notification" th:classappend="${p.notificationStatus.name() == 'ACKNOWLEDGED'} ? 'done'"
+                          th:text="${p.notificationStatus}"></span></td>
+                <td><code th:text="${p.externalId}"></code></td>
+                <td>
+                    <form th:if="${p.externalId != null}" th:action="@{/portal/payments/{id}/resend(id=${p.id})}" method="post" class="inline">
+                        <button type="submit" class="secondary resend">Resend</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Daily statement</h2>
+        <p>The bank's ledger for one day (Asia/Jakarta), as CSV.</p>
+        <form id="statement-form" class="inline"
+              onsubmit="window.location = this.dataset.base + this.day.value + '.csv'; return false;"
+              th:attr="data-base=@{/portal/api/statements/}">
+            <input type="date" name="day" id="statement-day" th:value="${today}" required>
+            <button type="submit" class="secondary" id="statement-download">Download CSV</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Reconciliation scenario</h2>
+        <p>Five VA numbers your app answers inquiries for. They are paid today as: normal, normal, notification
+            dropped, notified amount 1000.00 higher than credited, notified twice with different X-EXTERNAL-IDs.</p>
+        <form th:action="@{/portal/payments/seed}" method="post" class="stack" id="seed-form">
+            <label>VA numbers, one per line <textarea name="virtualAccountNos" id="seed-vas" rows="5" required></textarea></label>
+            <label>Channel
+                <select name="channelId" id="seed-channel" required>
+                    <option th:each="c : ${channels}" th:value="${c.id()}" th:text="|${c.id()} ${c.label()}|"></option>
+                </select>
+            </label>
+            <button type="submit" class="secondary" id="seed-submit">Create scenario</button>
+        </form>
+    </section>
+</main>
+</body>
+</html>
