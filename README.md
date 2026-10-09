@@ -110,7 +110,10 @@ every missing one.
    and secret your app issued to the bank. The bank calls
    `{base URL}/v1.0/access-token/b2b`, `{base URL}/v1.0/transfer-va/inquiry` and
    `/payment`, signing the token request with its key from `/keys/`. From a
-   container, an app on the host is `http://host.docker.internal:<port>`.
+   container, an app on the host is `http://host.docker.internal:<port>`
+   (`compose.yml` maps the name). Runtimes that ignore that mapping, such as
+   Apple's `container` via socktainer, reach the host at the container's
+   default gateway: `docker compose exec simulator ip route`.
 
 The connection overview shows the checklist: key registered, token obtained,
 signed call, VA created (BRI only), partner endpoint reachable, inquiry
