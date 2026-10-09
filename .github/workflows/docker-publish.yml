@@ -23,8 +23,6 @@ permissions:
 
 env:
   TEST_IMAGE: snap-provider-simulator:test
-  # Docker Hub is used once the DOCKERHUB_USERNAME / DOCKERHUB_TOKEN secrets exist; GHCR always.
-  HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
 
 jobs:
   build-test-push:
@@ -73,28 +71,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hub
-        if: steps.push.outputs.enabled == 'true' && env.HAS_DOCKERHUB == 'true'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Image names
-        id: images
-        run: |
-          {
-            echo "list<<EOF"
-            echo "ghcr.io/${{ github.repository_owner }}/snap-provider-simulator"
-            if [ "$HAS_DOCKERHUB" = "true" ]; then echo "artivisi/snap-provider-simulator"; fi
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Image tags
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.images.outputs.list }}
+          images: ghcr.io/${{ github.repository_owner }}/snap-provider-simulator
           # main → :main, :main-<sha>; tag 2026.10-RELEASE → :2026.10-RELEASE, :2026.10, :latest
           tags: |
             type=ref,event=branch

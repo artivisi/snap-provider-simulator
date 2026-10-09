@@ -2,7 +2,7 @@
 ## Image
 
 ```
-docker pull artivisi/snap-provider-simulator:<YYYY.MM>
+docker pull ghcr.io/artivisi/snap-provider-simulator:<YYYY.MM>
 ```
 
 ## Changes

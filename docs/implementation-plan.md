@@ -253,7 +253,7 @@ The reconciliation seeder (per partner) produces, for today:
 Per `docs/engineering-standard.md` (Container, CI, Versioning):
 
 - Balaka-style layered Dockerfile on `azul/zulu-openjdk-alpine:25-jre`, port 9090.
-- `ci.yml`, `docker-publish.yml` (amd64 + arm64, Docker Hub + GHCR, SBOM,
+- `ci.yml`, `docker-publish.yml` (amd64 + arm64, GHCR, SBOM,
   provenance, image tests before push), `release.yml`.
 - `compose.yml` example: simulator + `postgres:18-alpine` with a named volume and
   `pg_isready` healthcheck; bank key mounted from `./keys`.
@@ -274,7 +274,7 @@ Per `docs/engineering-standard.md` (Container, CI, Versioning):
 
 ## 9. Decisions (2026-10-06)
 
-1. **Registry: Docker Hub** `artivisi/snap-provider-simulator` (needs repo secrets `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`) and GHCR (`GITHUB_TOKEN`).
+1. **Registry: GHCR only** `ghcr.io/artivisi/snap-provider-simulator`, pushed with `GITHUB_TOKEN` (2026-10-09; Docker Hub dropped: no extra credentials, no anonymous pull limit per IP).
 2. **Partner public key: uploaded by the partner in the portal** (PEM), replaceable. (Supersedes the 2026-10-06 single-key upload decision.)
 3. **Reconciliation anomalies**: as described in §6.
 4. **PostgreSQL, multi-partner** (2026-10-07): state persists across restarts and several partner apps share one simulator, each with its own credentials, keys, settings and data.
